@@ -1,0 +1,232 @@
+/* Keep compact dashboard typography readable without losing its quiet hierarchy. */
+.sidebar {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #dfe4d6 transparent;
+}
+@media (max-width: 900px) {
+  .sidebar {
+    visibility: hidden;
+  }
+  .sidebar.is-open {
+    visibility: visible;
+  }
+}
+.hero {
+  height: 275px;
+}
+.nav-item {
+  font-size: 12px;
+}
+.stat-top {
+  font-size: 10px;
+}
+.stat-number {
+  font-size: 25px;
+}
+.stat-number small {
+  font-size: 9px;
+}
+.stat-bottom {
+  font-size: 8.5px;
+}
+.section-heading p {
+  font-size: 10px;
+}
+.text-button {
+  font-size: 10px;
+}
+.task-description strong {
+  font-size: 11px;
+}
+.task-description span {
+  font-size: 9px;
+}
+.due-tag {
+  font-size: 8px;
+}
+.add-task-inline {
+  font-size: 9px;
+}
+.compact .chart-legend > div,
+.compact .chart-legend strong {
+  font-size: 9px;
+}
+.budget-panel-note {
+  font-size: 8px;
+}
+.event-meta {
+  font-size: 9px;
+}
+.event-switch select {
+  width: 110px;
+  max-width: 110px;
+  padding: 5px 8px;
+  border: 1px solid #e6eadf;
+  border-radius: 5px;
+  color: #839276;
+  font-size: 8px;
+  background: #fafbf5;
+  margin-right: 5px;
+}
+.idea-card-body > span {
+  font-size: 8.5px;
+}
+.main-footer {
+  font-size: 8px;
+}
+@media (max-height: 850px) and (min-width: 901px) {
+  .hero {
+    height: 263px;
+  }
+  .hero-copy {
+    padding-top: 23px;
+    padding-bottom: 23px;
+  }
+}
+@media (max-width: 1200px) {
+  .stat-top {
+    font-size: 8px;
+  }
+  .stat-number {
+    font-size: 23px;
+  }
+  .stat-number small {
+    font-size: 7px;
+  }
+  .stat-bottom {
+    font-size: 7px;
+  }
+  .compact .chart-legend > div,
+  .compact .chart-legend strong {
+    font-size: 7px;
+  }
+  .section-heading p {
+    font-size: 8px;
+  }
+  .task-description strong {
+    font-size: 10px;
+  }
+  .task-description span {
+    font-size: 8px;
+  }
+  .due-tag {
+    font-size: 7px;
+  }
+  .budget-panel-note {
+    font-size: 7px;
+  }
+  .event-meta {
+    font-size: 8px;
+  }
+}
+@media (max-width: 900px) {
+  .hero {
+    height: 275px;
+  }
+  .event-progress {
+    display: none;
+  }
+  .section-heading p {
+    font-size: 9px;
+  }
+  .text-button {
+    font-size: 9px;
+  }
+}
+@media (max-width: 740px) {
+  .hero {
+    height: 265px;
+  }
+  .stat-top {
+    font-size: 10px;
+  }
+  .stat-number {
+    font-size: 27px;
+  }
+  .stat-number small {
+    font-size: 9px;
+  }
+  .stat-bottom {
+    font-size: 8px;
+  }
+  .compact .chart-legend > div,
+  .compact .chart-legend strong {
+    font-size: 7px;
+  }
+  .event-meta {
+    font-size: 8px;
+  }
+}
+@media (max-width: 520px) {
+  .hero {
+    height: 280px;
+  }
+  .hero-copy {
+    padding-top: 28px;
+  }
+  .stat-top {
+    font-size: 8.5px;
+  }
+  .stat-number {
+    font-size: 24px;
+  }
+  .stat-number small {
+    font-size: 7px;
+  }
+  .stat-bottom {
+    font-size: 7px;
+  }
+  .section-heading p {
+    font-size: 9px;
+  }
+  .task-description strong {
+    font-size: 11px;
+  }
+  .task-description span {
+    font-size: 9px;
+  }
+  .due-tag {
+    font-size: 8px;
+  }
+  .compact .chart-legend > div,
+  .compact .chart-legend strong {
+    font-size: 8px;
+  }
+  .budget-panel-note {
+    font-size: 8px;
+  }
+  .event-meta {
+    font-size: 7px;
+  }
+  .event-switch select {
+    width: 220px;
+    max-width: 220px;
+    font-size: 9px;
+    padding: 5px 8px;
+  }
+  .event-strip:has(select option:not(:only-child)) {
+    flex-wrap: wrap;
+  }
+  .event-strip:has(select option:not(:only-child)) .event-strip-main {
+    flex-basis: calc(100% - 50px);
+  }
+  .event-switch:has(select option:not(:only-child)) {
+    position: static;
+    flex-basis: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    border-top: 1px solid var(--line);
+    padding-top: 10px;
+    margin-top: 3px;
+  }
+  .event-title {
+    padding-right: 50px;
+  }
+  .main-footer {
+    font-size: 7px;
+  }
+  .idea-card-body > span {
+    font-size: 9px;
+  }
+}
