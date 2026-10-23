@@ -1,5 +1,11 @@
 "use client";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import {
   Check,
   ChevronRight,
@@ -10,7 +16,20 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
-import { todayISO, uid, type Celebration, type Task } from "@/lib/planner";
+import {
+  budgetTotals,
+  todayISO,
+  uid,
+  type Celebration,
+  type Task,
+} from "@/lib/planner";
+
+import {
+  chatReplySchema,
+  readApiResponse,
+  SIGN_IN_PATH,
+} from "@/lib/api-client";
+import { useDialog } from "./ui";
 
 interface Message {
   id: string;
@@ -23,12 +42,14 @@ export function Assistant({
   event,
   prompt,
   liveAI,
+  requiresSignIn = false,
   close,
   addTask,
 }: {
   event: Celebration;
   prompt: string;
   liveAI: boolean;
+  requiresSignIn?: boolean;
   close: () => void;
   addTask: (task: Task) => void;
 }) {
@@ -46,21 +67,40 @@ export function Assistant({
     controller = useRef<AbortController | null>(null),
     started = useRef(false),
     inputRef = useRef<HTMLInputElement>(null);
+  const drawer = useRef<HTMLElement>(null);
+  const inFlight = useRef(false);
+  const mounted = useRef(true);
+  const cancelled = useRef(false);
+  useDialog(drawer, close);
   useEffect(() => {
-    inputRef.current?.focus();
-    return () => controller.current?.abort();
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      controller.current?.abort();
+    };
   }, []);
   useEffect(() => {
     scroll.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, busy]);
+  const sendPrompt = useEffectEvent((text: string) => {
+    void send(text);
+  });
   useEffect(() => {
-    if (prompt && !started.current) {
-      started.current = true;
-      void send(prompt);
-    }
+    let disposed = false;
+    queueMicrotask(() => {
+      if (!disposed && prompt && !started.current) {
+        started.current = true;
+        sendPrompt(prompt);
+      }
+    });
+    return () => {
+      disposed = true;
+    };
   }, [prompt]);
   async function send(text: string) {
-    if (busy || !text.trim()) return;
+    if (inFlight.current || !text.trim()) return;
+    inFlight.current = true;
+    cancelled.current = false;
     const next =
       messages.at(-1)?.role === "user" && messages.at(-1)?.text === text.trim()
         ? messages
@@ -72,14 +112,16 @@ export function Assistant({
     setInput("");
     setBusy(true);
     setError("");
-    controller.current = new AbortController();
-    const timeout = setTimeout(() => controller.current?.abort(), 35000);
+    const activeController = new AbortController();
+    controller.current = activeController;
+    const timeout = setTimeout(() => activeController.abort(), 35000);
     try {
       const response = await fetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "chat",
+          mode: requiresSignIn ? "built-in" : "auto",
           event: {
             name: event.name,
             type: event.type,
@@ -89,7 +131,7 @@ export function Assistant({
             guestCount: event.guestCount,
             vibe: event.vibe,
           },
-          spending: event.expenses.reduce((s, e) => s + e.amount, 0),
+          spending: budgetTotals(event).recorded,
           tasks: event.tasks
             .filter((t) => !t.done)
             .slice(0, 8)
@@ -99,35 +141,30 @@ export function Assistant({
             .slice(-8)
             .map(({ role, text }) => ({ role, text: text.slice(0, 2000) })),
         }),
-        signal: controller.current.signal,
+        signal: activeController.signal,
       });
-      const data = (await response.json()) as {
-        error?: string;
-        text?: string;
-        source?: string;
-      };
-      if (!response.ok)
-        throw new Error(
-          data.error ?? "We couldn’t reach your planning companion.",
-        );
-      if (typeof data.text !== "string" || !data.text.trim())
-        throw new Error("No idea came through. Please try again.");
+      const data = chatReplySchema.parse(await readApiResponse(response));
+      if (!mounted.current || activeController.signal.aborted) return;
       const reply = data.text;
       setMessages((current) => [
         ...current,
         { id: uid(), role: "assistant", text: reply, source: data.source },
       ]);
     } catch (err) {
+      if (!mounted.current) return;
       setError(
-        controller.current.signal.aborted
-          ? "That took a little too long. Try again in a moment."
-          : err instanceof Error
-            ? err.message
-            : "Something went wrong. Please try again.",
+        cancelled.current
+          ? "Response cancelled. You can try another question."
+          : activeController.signal.aborted
+            ? "That took a little too long. Try again in a moment."
+            : err instanceof Error
+              ? err.message
+              : "Something went wrong. Please try again.",
       );
     } finally {
       clearTimeout(timeout);
-      setBusy(false);
+      inFlight.current = false;
+      if (mounted.current) setBusy(false);
     }
   }
   function submit(e: FormEvent) {
@@ -135,7 +172,10 @@ export function Assistant({
     void send(input);
   }
   return (
-    <aside
+    <section
+      ref={drawer}
+      tabIndex={-1}
+      aria-modal="true"
       className="assistant-drawer"
       role="dialog"
       aria-label="Gather planning assistant"
@@ -148,7 +188,9 @@ export function Assistant({
           <h2>A little help from Gather</h2>
           <span>
             <i />
-            {liveAI ? "Powered by Gemini" : "Built-in planning companion"}
+            {liveAI && !requiresSignIn
+              ? "Powered by Gemini"
+              : "Built-in planning companion"}
           </span>
         </div>
         <button
@@ -165,7 +207,13 @@ export function Assistant({
           Planning for <strong>{event.name}</strong>
         </span>
       </div>
-      <div className="assistant-messages" aria-live="polite">
+      <div
+        className="assistant-messages"
+        role="log"
+        aria-label="Planning conversation"
+        aria-live="polite"
+        aria-relevant="additions text"
+      >
         {messages.map((message) => (
           <div className={`chat-message ${message.role}`} key={message.id}>
             {message.role === "assistant" && (
@@ -219,7 +267,7 @@ export function Assistant({
           </div>
         ))}
         {busy && (
-          <div className="thinking">
+          <div className="thinking" role="status">
             <Sparkles size={16} />
             <span>A little thought goes a long way</span>
             <LoaderCircle size={15} className="spin" />
@@ -243,6 +291,25 @@ export function Assistant({
         <div ref={scroll} />
       </div>
       <div className="assistant-bottom">
+        {requiresSignIn && (
+          <p className="signin-note">
+            <a href={SIGN_IN_PATH} target="_top">
+              Sign in with ChatGPT
+            </a>{" "}
+            for live Gemini ideas. Built-in guidance is ready now.
+          </p>
+        )}
+        {busy && (
+          <button
+            className="text-button"
+            onClick={() => {
+              cancelled.current = true;
+              controller.current?.abort();
+            }}
+          >
+            Cancel response
+          </button>
+        )}
         {messages.length < 3 && (
           <div className="prompt-chips">
             {[
@@ -280,7 +347,7 @@ export function Assistant({
           Ideas to inspire. Confirm prices and details locally.
         </span>
       </div>
-    </aside>
+    </section>
   );
 }
 function HeartIcon() {

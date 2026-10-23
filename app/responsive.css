@@ -15,10 +15,10 @@
     font-size: 11px;
   }
   .hero-button {
-    font-size: 10px;
+    font-size: 11px;
   }
   .hero-kicker {
-    font-size: 8px;
+    font-size: 11px;
   }
   .page-heading h1 {
     font-size: 34px;
@@ -33,23 +33,23 @@
     padding: 19px 21px;
   }
   .stat-top {
-    font-size: 10px;
+    font-size: 11px;
   }
   .stat-number {
     font-size: 27px;
   }
   .stat-number small {
-    font-size: 10px;
+    font-size: 11px;
   }
   .stat-bottom {
-    font-size: 9px;
+    font-size: 11px;
   }
   .section-heading h2 {
     font-size: 20px;
   }
   .section-heading p,
   .text-button {
-    font-size: 10px;
+    font-size: 11px;
   }
   .upcoming-row {
     padding: 16px 0;
@@ -59,7 +59,7 @@
   }
   .task-description span,
   .due-tag {
-    font-size: 9px;
+    font-size: 11px;
   }
   .budget-chart.compact .donut-wrap {
     width: 160px;
@@ -67,7 +67,7 @@
   .compact .chart-legend > div,
   .compact .chart-legend strong,
   .budget-panel-note {
-    font-size: 9px;
+    font-size: 11px;
   }
   .idea-image-wrap {
     height: 200px;
@@ -76,22 +76,22 @@
     font-size: 17px;
   }
   .idea-card-body > span {
-    font-size: 9px;
+    font-size: 11px;
   }
   .event-title h2 {
     font-size: 20px;
   }
   .event-meta {
-    font-size: 10px;
+    font-size: 11px;
   }
   .event-progress {
     width: 200px;
   }
   .event-progress > span {
-    font-size: 9px;
+    font-size: 11px;
   }
   .main-footer {
-    font-size: 9px;
+    font-size: 11px;
   }
 }
 @media (max-width: 1200px) {
@@ -113,7 +113,7 @@
     font-size: 33px;
   }
   .brand-caption {
-    font-size: 9px;
+    font-size: 11px;
   }
   .main-content {
     padding: 25px 27px 0;
@@ -125,7 +125,7 @@
     font-size: 25px;
   }
   .page-heading p {
-    font-size: 10px;
+    font-size: 11px;
   }
   .event-progress {
     display: none;
@@ -140,10 +140,10 @@
     font-size: 21px;
   }
   .stat-number small {
-    font-size: 7px;
+    font-size: 11px;
   }
   .stat-top {
-    font-size: 7.5px;
+    font-size: 11px;
   }
   .stat-icon {
     height: 25px;
@@ -153,7 +153,7 @@
     width: 15px;
   }
   .stat-bottom {
-    font-size: 6.5px;
+    font-size: 11px;
   }
   .panel {
     padding: 19px 17px;
@@ -175,7 +175,7 @@
   }
   .compact .chart-legend > div,
   .compact .chart-legend strong {
-    font-size: 6.5px;
+    font-size: 11px;
     gap: 5px;
   }
   .chart-legend > div > span {
@@ -185,23 +185,23 @@
     font-size: 15px;
   }
   .section-heading p {
-    font-size: 7.5px;
+    font-size: 11px;
   }
   .section-heading .text-button {
-    font-size: 7px;
+    font-size: 11px;
     gap: 2px;
   }
   .upcoming-row {
     gap: 9px;
   }
   .task-description strong {
-    font-size: 9px;
+    font-size: 11px;
   }
   .task-description span {
-    font-size: 7px;
+    font-size: 11px;
   }
   .due-tag {
-    font-size: 6.5px;
+    font-size: 11px;
     padding: 3px 5px;
   }
   .idea-image-wrap {
@@ -211,7 +211,7 @@
     font-size: 12px;
   }
   .idea-card-body > span {
-    font-size: 6.5px;
+    font-size: 11px;
   }
   .ideas-grid {
     gap: 14px;
@@ -229,7 +229,7 @@
     padding: 18px 15px;
   }
   .vendor-checklist label {
-    font-size: 7px;
+    font-size: 11px;
   }
   .inspiration-intro {
     padding: 23px;
@@ -239,7 +239,7 @@
     font-size: 17px;
   }
   .inspiration-intro > .button {
-    font-size: 8px;
+    font-size: 11px;
     padding: 9px;
   }
   .inspiration-icon {
@@ -251,7 +251,7 @@
   }
   .budget-chart:not(.compact) .chart-legend > div,
   .budget-chart:not(.compact) .chart-legend strong {
-    font-size: 7px;
+    font-size: 11px;
   }
   .budget-chart {
     gap: 13px;
@@ -278,7 +278,7 @@
     font-size: 13px;
   }
   .assistant-card p {
-    font-size: 9px;
+    font-size: 11px;
   }
   .assistant-mini-stars {
     margin-bottom: 8px;
@@ -314,14 +314,14 @@
     display: none;
   }
   .stat-top {
-    font-size: 7px;
+    font-size: 11px;
   }
   .stat-number {
     font-size: 18px;
   }
   .stat-number small,
   .stat-bottom {
-    font-size: 6px;
+    font-size: 11px;
   }
   .overview-grid {
     grid-template-columns: 1fr 1fr;
@@ -333,7 +333,7 @@
     font-size: 14px;
   }
   .task-description strong {
-    font-size: 8px;
+    font-size: 11px;
   }
   .budget-chart.compact {
     gap: 4px;
@@ -344,7 +344,7 @@
   .compact .chart-legend > div,
   .compact .chart-legend strong,
   .budget-panel-note {
-    font-size: 6px;
+    font-size: 11px;
   }
   .hero-sticker {
     right: 25px;
@@ -361,7 +361,7 @@
     font-size: 15px;
   }
   .sample-tag {
-    font-size: 5px;
+    font-size: 11px;
   }
 }
 @media (max-width: 900px) {
@@ -399,7 +399,7 @@
     font-size: 29px;
   }
   .page-heading p {
-    font-size: 10.5px;
+    font-size: 11px;
   }
   .hero {
     height: 254px;
@@ -411,19 +411,19 @@
     padding: 28px 31px;
   }
   .hero-copy p {
-    font-size: 10px;
+    font-size: 11px;
   }
   .stat-top {
-    font-size: 8px;
+    font-size: 11px;
   }
   .stat-number {
     font-size: 22px;
   }
   .stat-number small {
-    font-size: 7.5px;
+    font-size: 11px;
   }
   .stat-bottom {
-    font-size: 7px;
+    font-size: 11px;
   }
   .overview-grid {
     grid-template-columns: 1.12fr 1fr;
@@ -436,17 +436,17 @@
   }
   .section-heading p,
   .section-heading .text-button {
-    font-size: 8px;
+    font-size: 11px;
   }
   .compact .donut-wrap {
     width: 128px;
   }
   .task-description strong {
-    font-size: 10px;
+    font-size: 11px;
   }
   .compact .chart-legend > div,
   .compact .chart-legend strong {
-    font-size: 7px;
+    font-size: 11px;
   }
   .idea-card h3 {
     font-size: 13px;
@@ -455,13 +455,13 @@
     height: 162px;
   }
   .idea-card-body > span {
-    font-size: 7px;
+    font-size: 11px;
   }
   .event-title h2 {
     font-size: 18px;
   }
   .event-meta {
-    font-size: 8px;
+    font-size: 11px;
   }
   .event-progress {
     display: block;
@@ -472,11 +472,11 @@
     left: 50%;
   }
   .vendor-checklist label {
-    font-size: 8px;
+    font-size: 11px;
   }
   .budget-chart:not(.compact) .chart-legend > div,
   .budget-chart:not(.compact) .chart-legend strong {
-    font-size: 8px;
+    font-size: 11px;
   }
   .budget-chart:not(.compact) .donut-wrap {
     width: 150px;
@@ -491,7 +491,7 @@
   }
   .new-event {
     padding: 10px 12px;
-    font-size: 9px;
+    font-size: 11px;
   }
   .stat-grid {
     grid-template-columns: 1fr 1fr;
@@ -501,16 +501,16 @@
     padding: 16px 18px 13px;
   }
   .stat-top {
-    font-size: 10px;
+    font-size: 11px;
   }
   .stat-number {
     font-size: 27px;
   }
   .stat-number small {
-    font-size: 9px;
+    font-size: 11px;
   }
   .stat-bottom {
-    font-size: 8px;
+    font-size: 11px;
   }
   .stat-icon {
     width: 32px;
@@ -530,13 +530,13 @@
     font-size: 15px;
   }
   .section-heading p {
-    font-size: 7px;
+    font-size: 11px;
   }
   .task-description strong {
-    font-size: 9px;
+    font-size: 11px;
   }
   .due-tag {
-    font-size: 6px;
+    font-size: 11px;
   }
   .compact .donut-wrap {
     width: 110px;
@@ -544,10 +544,10 @@
   .compact .chart-legend > div,
   .compact .chart-legend strong,
   .budget-panel-note {
-    font-size: 6px;
+    font-size: 11px;
   }
   .section-heading .text-button {
-    font-size: 7px;
+    font-size: 11px;
   }
   .event-progress {
     display: none;
@@ -563,7 +563,7 @@
     width: 62%;
   }
   .hero-copy p {
-    font-size: 9px;
+    font-size: 11px;
   }
   .hero-photo {
     left: 34%;
@@ -576,7 +576,7 @@
     top: 35px;
   }
   .hero-sticker span {
-    font-size: 8px;
+    font-size: 11px;
   }
   .hero-sticker em {
     font-size: 12px;
@@ -586,7 +586,7 @@
     margin-top: 16px;
   }
   .hero-caption {
-    font-size: 6px;
+    font-size: 11px;
     right: 16px;
   }
   .ideas-grid {
@@ -602,10 +602,10 @@
     padding: 13px 10px;
   }
   .idea-card-body > span {
-    font-size: 6px;
+    font-size: 11px;
   }
   .idea-tag {
-    font-size: 6px;
+    font-size: 11px;
     left: 9px;
     bottom: 9px;
     padding: 3px 6px;
@@ -619,7 +619,7 @@
   }
   .thoughtful-banner p,
   .thoughtful-banner > button {
-    font-size: 8px;
+    font-size: 11px;
   }
   .thoughtful-banner > button {
     gap: 10px;
@@ -652,14 +652,14 @@
     font-size: 21px;
   }
   .guest-stat > div > span {
-    font-size: 7px;
+    font-size: 11px;
   }
   .view-toolbar {
     gap: 10px;
     flex-wrap: wrap;
   }
   .filter-tabs button {
-    font-size: 8px;
+    font-size: 11px;
     padding: 6px 9px;
   }
   .inspiration-intro {
@@ -677,7 +677,7 @@
     font-size: 19px;
   }
   .inspiration-intro .eyebrow {
-    font-size: 6px;
+    font-size: 11px;
   }
   .main-footer > span:last-child {
     display: none;
@@ -686,7 +686,7 @@
     font-size: 19px;
   }
   .timeline-summary p {
-    font-size: 9px;
+    font-size: 11px;
   }
   .timeline-ring {
     width: 57px;
@@ -698,7 +698,7 @@
     width: 45px;
   }
   .timeline-row .task-description strong {
-    font-size: 10px;
+    font-size: 11px;
   }
   .timeline-row {
     gap: 13px;
@@ -740,15 +740,15 @@
     margin: 7px 0;
   }
   .page-heading p {
-    font-size: 9px;
+    font-size: 11px;
   }
   .eyebrow {
-    font-size: 6.5px;
+    font-size: 11px;
     letter-spacing: 1.4px;
   }
   .new-event {
     min-height: 33px;
-    font-size: 9px;
+    font-size: 11px;
     padding: 8px 12px;
     margin-top: 0;
   }
@@ -767,11 +767,11 @@
     font-size: 37px;
   }
   .hero-kicker {
-    font-size: 6px;
+    font-size: 11px;
     letter-spacing: 1.4px;
   }
   .hero-copy p {
-    font-size: 9px;
+    font-size: 11px;
     margin-top: 15px;
     color: #d0d7c7;
   }
@@ -802,22 +802,22 @@
     outline-offset: 3px;
   }
   .hero-sticker span {
-    font-size: 7px;
+    font-size: 11px;
   }
   .hero-sticker em {
-    font-size: 10px;
+    font-size: 11px;
   }
   .hero-sticker > svg {
     width: 11px;
     margin-top: 13px;
   }
   .hero-caption {
-    font-size: 5.5px;
+    font-size: 11px;
     bottom: 13px;
   }
   .hero-button {
     margin-top: 20px;
-    font-size: 8px;
+    font-size: 11px;
     padding: 8px 11px;
   }
   .event-strip {
@@ -844,12 +844,12 @@
     line-height: 1.4;
   }
   .sample-tag {
-    font-size: 5px;
+    font-size: 11px;
     padding: 1px 4px;
     letter-spacing: 0.5px;
   }
   .event-meta {
-    font-size: 6.5px;
+    font-size: 11px;
     gap: 5px;
     margin-top: 5px;
   }
@@ -864,7 +864,7 @@
     display: none;
   }
   .event-strip > .status-pill {
-    font-size: 6px;
+    font-size: 11px;
     padding: 3px 6px;
     position: absolute;
     right: 12px;
@@ -886,14 +886,14 @@
     padding: 13px 12px 11px;
   }
   .stat-top {
-    font-size: 7.5px;
+    font-size: 11px;
   }
   .stat-number {
     font-size: 24px;
     margin-top: 9px;
   }
   .stat-number small {
-    font-size: 7px;
+    font-size: 11px;
   }
   .stat-icon {
     width: 26px;
@@ -903,7 +903,7 @@
     width: 15px;
   }
   .stat-bottom {
-    font-size: 6.5px;
+    font-size: 11px;
     margin-top: 11px;
     padding-top: 9px;
     gap: 3px;
@@ -923,27 +923,27 @@
     font-size: 18px;
   }
   .section-heading p {
-    font-size: 8px;
+    font-size: 11px;
     margin-top: 5px;
   }
   .section-heading .text-button {
-    font-size: 8px;
+    font-size: 11px;
   }
   .task-description strong {
     font-size: 11px;
   }
   .task-description span {
-    font-size: 8px;
+    font-size: 11px;
   }
   .due-tag {
-    font-size: 7px;
+    font-size: 11px;
     padding: 4px 7px;
   }
   .upcoming-row {
     padding: 15px 0;
   }
   .add-task-inline {
-    font-size: 9px;
+    font-size: 11px;
     margin-top: 15px;
   }
   .budget-chart.compact {
@@ -955,10 +955,10 @@
   }
   .compact .chart-legend > div,
   .compact .chart-legend strong {
-    font-size: 8px;
+    font-size: 11px;
   }
   .budget-panel-note {
-    font-size: 7.5px;
+    font-size: 11px;
     padding-top: 13px;
     margin-top: 14px;
   }
@@ -972,7 +972,7 @@
   }
   .inspiration-section .section-heading p,
   .inspiration-section .section-heading .text-button {
-    font-size: 7px;
+    font-size: 11px;
   }
   .ideas-grid {
     grid-template-columns: 1fr;
@@ -988,11 +988,11 @@
     padding: 16px 17px;
   }
   .idea-card-body > span {
-    font-size: 9px;
+    font-size: 11px;
     margin-top: 7px;
   }
   .idea-tag {
-    font-size: 8px;
+    font-size: 11px;
     bottom: 14px;
     left: 15px;
     padding: 4px 9px;
@@ -1016,11 +1016,11 @@
     font-size: 16px;
   }
   .thoughtful-banner p {
-    font-size: 8px;
+    font-size: 11px;
   }
   .thoughtful-banner > button {
     margin-left: 54px;
-    font-size: 9px;
+    font-size: 11px;
     gap: 15px;
   }
   .thoughtful-icon {
@@ -1032,33 +1032,33 @@
     top: 30px;
   }
   .main-footer {
-    font-size: 6.5px;
+    font-size: 11px;
     padding: 25px 0 32px;
   }
   .main-footer > button {
-    font-size: 7px;
+    font-size: 11px;
   }
   .assistant-fab {
     bottom: 18px;
     right: 17px;
     padding: 10px 14px;
-    font-size: 10px;
+    font-size: 11px;
   }
   .allocation-grid {
     grid-template-columns: 1fr 1fr;
     gap: 22px 20px;
   }
   .allocation-item > span {
-    font-size: 8px;
+    font-size: 11px;
   }
   .allocation-item > strong {
     font-size: 18px;
   }
   .allocation-item > small {
-    font-size: 7px;
+    font-size: 11px;
   }
   .budget-split span {
-    font-size: 8px;
+    font-size: 11px;
   }
   .budget-split strong {
     font-size: 13px;
@@ -1068,10 +1068,10 @@
   }
   .budget-chart:not(.compact) .chart-legend > div,
   .budget-chart:not(.compact) .chart-legend strong {
-    font-size: 7px;
+    font-size: 11px;
   }
   .note p {
-    font-size: 9px;
+    font-size: 11px;
   }
   .note {
     padding: 15px;
@@ -1093,7 +1093,7 @@
     font-size: 16px;
   }
   .timeline-summary p {
-    font-size: 8px;
+    font-size: 11px;
   }
   .timeline-ring {
     height: 46px;
@@ -1103,20 +1103,20 @@
     font-size: 18px;
   }
   .timeline-ring > span {
-    font-size: 6px;
+    font-size: 11px;
   }
   .timeline-row {
     gap: 9px;
     padding: 19px 0;
   }
   .timeline-row .task-description strong {
-    font-size: 9px;
+    font-size: 11px;
   }
   .timeline-row .task-description span {
-    font-size: 7px;
+    font-size: 11px;
   }
   .timeline-row .due-tag {
-    font-size: 5.5px;
+    font-size: 11px;
     padding: 3px 4px;
   }
   .timeline-row > .icon-button {
@@ -1130,7 +1130,7 @@
     font-size: 19px;
   }
   .timeline-date > small {
-    font-size: 6px;
+    font-size: 11px;
   }
   .task-checkbox {
     width: 14px;
@@ -1140,7 +1140,7 @@
     gap: 8px;
   }
   .toolbar-buttons > .button {
-    font-size: 8px;
+    font-size: 11px;
     min-height: 30px;
     padding: 7px 9px;
     gap: 5px;
@@ -1159,7 +1159,7 @@
     gap: 12px;
   }
   .filter-tabs button {
-    font-size: 8px;
+    font-size: 11px;
     padding: 6px 8px;
   }
   .vendor-grid {
@@ -1174,19 +1174,19 @@
   .vendor-contact,
   .vendor-quote span,
   .vendor-status-label span {
-    font-size: 10px;
+    font-size: 11px;
   }
   .vendor-quote strong {
     font-size: 14px;
   }
   .vendor-checklist label {
-    font-size: 10px;
+    font-size: 11px;
   }
   .vendor-checklist {
     gap: 15px;
   }
   .vendor-status-label > select {
-    font-size: 10px;
+    font-size: 11px;
     max-width: 140px;
   }
   .guest-stats {
@@ -1203,7 +1203,7 @@
     line-height: 1.4;
   }
   .guest-stat > div > span {
-    font-size: 6.5px;
+    font-size: 11px;
     line-height: 1.6;
   }
   .guest-stat > .stat-icon {
@@ -1220,10 +1220,10 @@
     padding: 10px 12px;
   }
   .search-box input {
-    font-size: 10px;
+    font-size: 11px;
   }
   .filter-select {
-    font-size: 8px;
+    font-size: 11px;
     min-height: 30px;
   }
   .view-toolbar > .toolbar-buttons {
@@ -1240,11 +1240,11 @@
     min-width: 180px;
   }
   .inspiration-intro .eyebrow {
-    font-size: 5px;
+    font-size: 11px;
     letter-spacing: 1px;
   }
   .inspiration-intro p {
-    font-size: 7px;
+    font-size: 11px;
   }
   .inspiration-icon {
     height: 36px;
@@ -1257,7 +1257,7 @@
     margin-left: 49px;
   }
   .subtle-text {
-    font-size: 7px;
+    font-size: 11px;
   }
   .inspiration-intro + .view-toolbar > .subtle-text {
     display: none;
@@ -1274,10 +1274,10 @@
     font-size: 26px;
   }
   .modal-head p {
-    font-size: 9px;
+    font-size: 11px;
   }
   .modal-head .eyebrow {
-    font-size: 6px;
+    font-size: 11px;
   }
   .modal-head {
     margin-bottom: 20px;
@@ -1289,16 +1289,16 @@
     padding: 13px 5px;
   }
   .event-type-options strong {
-    font-size: 10px;
+    font-size: 11px;
   }
   .event-type-options small {
-    font-size: 5.5px;
+    font-size: 11px;
   }
   .event-type-options > button > svg {
     width: 21px;
   }
-  .field > span {
-    font-size: 9px;
+  .field > label {
+    font-size: 11px;
   }
   .field input,
   .field select,
@@ -1308,10 +1308,10 @@
   }
   .field input::placeholder,
   .field textarea::placeholder {
-    font-size: 9px;
+    font-size: 11px;
   }
   .field small {
-    font-size: 7px;
+    font-size: 11px;
   }
   .form-grid {
     gap: 11px;
@@ -1320,7 +1320,7 @@
     gap: 10px;
   }
   .modal-actions .button {
-    font-size: 8px;
+    font-size: 11px;
     padding: 10px 11px;
     gap: 5px;
   }
@@ -1328,19 +1328,19 @@
     width: 13px;
   }
   .form-ai-note p {
-    font-size: 8px;
+    font-size: 11px;
   }
   .settings-block {
     padding: 16px;
   }
   .settings-block strong {
-    font-size: 10px;
+    font-size: 11px;
   }
   .settings-block p {
-    font-size: 9px;
+    font-size: 11px;
   }
   .settings-block .status-pill {
-    font-size: 6px;
+    font-size: 11px;
   }
   .assistant-header {
     padding: 20px 18px;
@@ -1367,7 +1367,7 @@
     font-size: 11px;
   }
   .toast {
-    font-size: 10px;
+    font-size: 11px;
     min-width: 290px;
     bottom: 18px;
     gap: 8px;

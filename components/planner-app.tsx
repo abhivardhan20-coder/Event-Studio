@@ -1,5 +1,12 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -25,13 +32,13 @@ import {
   X,
 } from "lucide-react";
 import {
-  seedStore,
-  storeSchema,
+  saveItem,
+  removeItem as removePlannerItem,
   dateLabel,
   daysUntil,
   exportPlan,
   type Celebration,
-  type PlannerStore,
+  type ItemKind,
   type Tab,
   type Idea,
   type Task,
@@ -39,17 +46,33 @@ import {
   type Vendor,
   type Guest,
 } from "@/lib/planner";
-import {
-  Overview,
-  BudgetView,
-  TimelineView,
-  VendorsView,
-  GuestsView,
-  InspirationView,
-} from "./views";
+import { Overview } from "./views/overview";
 import { EventForm, ItemForm, SettingsForm } from "./forms";
 import { Assistant } from "./assistant";
 import { Modal, downloadFile } from "./ui";
+import Image from "next/image";
+import { usePlannerStore } from "@/hooks/use-planner-store";
+import { useAIStatus } from "@/hooks/use-ai-status";
+
+const BudgetView = lazy(() =>
+  import("./views/budget").then((module) => ({ default: module.BudgetView })),
+);
+const TimelineView = lazy(() =>
+  import("./views/timeline").then((module) => ({
+    default: module.TimelineView,
+  })),
+);
+const VendorsView = lazy(() =>
+  import("./views/vendors").then((module) => ({ default: module.VendorsView })),
+);
+const GuestsView = lazy(() =>
+  import("./views/guests").then((module) => ({ default: module.GuestsView })),
+);
+const InspirationView = lazy(() =>
+  import("./views/inspiration").then((module) => ({
+    default: module.InspirationView,
+  })),
+);
 
 const navigation: { name: Tab; icon: typeof LayoutGrid }[] = [
   { name: "Overview", icon: LayoutGrid },
@@ -58,7 +81,6 @@ const navigation: { name: Tab; icon: typeof LayoutGrid }[] = [
   { name: "Vendors", icon: Store },
   { name: "Guest list", icon: Users },
 ];
-export type ItemKind = "task" | "expense" | "vendor" | "guest";
 type ModalKind =
   | "event"
   | "edit-event"
@@ -67,10 +89,12 @@ type ModalKind =
   | "notifications"
   | ItemKind
   | null;
-const STORAGE_KEY = "gather-planner-v1";
 
 export default function PlannerApp() {
-  const [store, setStore] = useState<PlannerStore | null>(null);
+  const { store, setStore, persisted, warning, restoreBackup, recoveryBackup } =
+    usePlannerStore();
+  const { configured: liveAI, requiresSignIn } = useAIStatus();
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const [tab, setTab] = useState<Tab>("Overview");
   const [modal, setModal] = useState<ModalKind>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -82,44 +106,7 @@ export default function PlannerApp() {
     Task | Expense | Vendor | Guest | undefined
   >();
   const [savedOnly, setSavedOnly] = useState(false);
-  const [liveAI, setLiveAI] = useState(false);
   const notify = useCallback((message: string) => setToast(message), []);
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      const stored = raw ? storeSchema.parse(JSON.parse(raw)) : seedStore();
-      if (!stored.events.length) setStore(seedStore());
-      else
-        setStore({
-          ...stored,
-          activeId: stored.events.some((e) => e.id === stored.activeId)
-            ? stored.activeId
-            : stored.events[0].id,
-        });
-    } catch {
-      setStore(seedStore());
-      setToast("We couldn't read your saved plan. A fresh example is ready.");
-    }
-    fetch("/api/plan")
-      .then((r) => r.json())
-      .then((data) =>
-        setLiveAI(
-          typeof data === "object" &&
-            data !== null &&
-            "configured" in data &&
-            data.configured === true,
-        ),
-      )
-      .catch(() => {});
-  }, []);
-  useEffect(() => {
-    if (store)
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-      } catch {
-        setToast("Browser storage is full. Export your plan to keep a copy.");
-      }
-  }, [store]);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(""), 4500);
@@ -130,21 +117,30 @@ export default function PlannerApp() {
     setEditing(undefined);
   }, []);
   const closeIdea = useCallback(() => setIdea(null), []);
+  const closeAssistant = useCallback(() => setAssistantOpen(false), []);
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    document.querySelector<HTMLButtonElement>(".sidebar nav button")?.focus();
+    const dismiss = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSidebarOpen(false);
+        document.querySelector<HTMLButtonElement>(".mobile-menu")?.focus();
+      }
+    };
+    document.addEventListener("keydown", dismiss);
+    return () => document.removeEventListener("keydown", dismiss);
+  }, [sidebarOpen]);
   const event =
     store?.events.find((e) => e.id === store.activeId) ?? store?.events[0];
   const update = useCallback(
     (updater: (event: Celebration) => Celebration) =>
-      setStore((current) =>
-        current
-          ? {
-              ...current,
-              events: current.events.map((e) =>
-                e.id === current.activeId ? updater(e) : e,
-              ),
-            }
-          : current,
-      ),
-    [],
+      setStore((current) => ({
+        ...current,
+        events: current.events.map((event) =>
+          event.id === current.activeId ? updater(event) : event,
+        ),
+      })),
+    [setStore],
   );
   const openItem = (kind: ItemKind, item?: Task | Expense | Vendor | Guest) => {
     setEditing(item);
@@ -154,8 +150,11 @@ export default function PlannerApp() {
     setTab(next);
     setSavedOnly(false);
     setSidebarOpen(false);
+    requestAnimationFrame(() => headingRef.current?.focus());
   };
   const ask = (prompt = "") => {
+    setModal(null);
+    setIdea(null);
     setAssistantPrompt(prompt);
     setAssistantOpen(true);
     setSidebarOpen(false);
@@ -197,18 +196,15 @@ export default function PlannerApp() {
       <Users size={19} />
     );
   const createOrUpdate = (next: Celebration) => {
-    setStore((current) =>
-      current
-        ? {
-            ...current,
-            activeId: next.id,
-            events:
-              modal === "edit-event"
-                ? current.events.map((e) => (e.id === next.id ? next : e))
-                : [...current.events, next],
-          }
-        : current,
-    );
+    const committed = setStore((current) => ({
+      ...current,
+      activeId: next.id,
+      events:
+        modal === "edit-event"
+          ? current.events.map((e) => (e.id === next.id ? next : e))
+          : [...current.events, next],
+    }));
+    if (!committed) return;
     setTab("Overview");
     closeModal();
     notify(
@@ -218,48 +214,29 @@ export default function PlannerApp() {
     );
   };
   const itemSave = (kind: ItemKind, value: Task | Expense | Vendor | Guest) => {
-    update((e) => {
-      const key = {
-        task: "tasks",
-        expense: "expenses",
-        vendor: "vendors",
-        guest: "guests",
-      }[kind] as "tasks" | "expenses" | "vendors" | "guests";
-      const list = e[key] as { id: string }[];
-      return {
-        ...e,
-        [key]: editing
-          ? list.map((item) => (item.id === value.id ? value : item))
-          : [...list, value],
-      };
-    });
+    if (!update((e) => saveItem(e, kind, value))) return;
     closeModal();
     notify(
       `${kind[0].toUpperCase() + kind.slice(1)} ${editing ? "updated" : "added"}. One less thing to think about.`,
     );
   };
   const removeItem = (kind: ItemKind, id: string) => {
-    update((e) => {
-      const key = {
-        task: "tasks",
-        expense: "expenses",
-        vendor: "vendors",
-        guest: "guests",
-      }[kind] as "tasks" | "expenses" | "vendors" | "guests";
-      return {
-        ...e,
-        [key]: (e[key] as { id: string }[]).filter((x) => x.id !== id),
-      };
-    });
+    if (!update((e) => removePlannerItem(e, kind, id))) return;
     closeModal();
     notify("Removed from your plan.");
   };
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">
+        Skip to planning content
+      </a>
       {sidebarOpen && (
         <div className="sidebar-scrim" onClick={() => setSidebarOpen(false)} />
       )}
-      <aside className={`sidebar ${sidebarOpen ? "is-open" : ""}`}>
+      <aside
+        id="planning-navigation"
+        className={`sidebar ${sidebarOpen ? "is-open" : ""}`}
+      >
         <a
           className="brand"
           href="#"
@@ -282,11 +259,12 @@ export default function PlannerApp() {
           </div>
           <ChevronDown size={15} />
         </div>
-        <span className="nav-label">LET'S MAKE IT HAPPEN</span>
+        <span className="nav-label">LET’S MAKE IT HAPPEN</span>
         <nav aria-label="Planning tools">
           {navigation.map(({ name, icon: Icon }) => (
             <button
               key={name}
+              aria-current={tab === name ? "page" : undefined}
               className={`nav-item ${tab === name ? "active" : ""}`}
               onClick={() => go(name)}
             >
@@ -360,8 +338,10 @@ export default function PlannerApp() {
           <div className="breadcrumbs">
             <button
               className="icon-button mobile-menu"
-              aria-label="Open menu"
-              onClick={() => setSidebarOpen(true)}
+              aria-label={sidebarOpen ? "Close menu" : "Open menu"}
+              aria-expanded={sidebarOpen}
+              aria-controls="planning-navigation"
+              onClick={() => setSidebarOpen((value) => !value)}
             >
               <Menu size={22} />
             </button>
@@ -372,7 +352,9 @@ export default function PlannerApp() {
           <div className="topbar-actions">
             <span className="save-status">
               <span />
-              All changes saved locally
+              {persisted
+                ? "All changes saved locally"
+                : "Unsaved · download a backup"}
             </span>
             <button
               className="icon-button notification-button"
@@ -392,11 +374,22 @@ export default function PlannerApp() {
             </button>
           </div>
         </header>
-        <main id="main-content" className="main-content">
+        <main id="main-content" className="main-content" tabIndex={-1}>
+          {warning && (
+            <div className="storage-warning" role="alert">
+              {warning}{" "}
+              <button
+                className="text-button"
+                onClick={() => setModal("settings")}
+              >
+                Open Settings
+              </button>
+            </div>
+          )}
           <div className="page-heading">
             <div>
               <span className="eyebrow">YOUR NEXT CHAPTER STARTS HERE</span>
-              <h1>
+              <h1 ref={headingRef} tabIndex={-1}>
                 {tab === "Overview" ? (
                   <>
                     Good things are coming, {store.profile}
@@ -550,49 +543,57 @@ export default function PlannerApp() {
               </button>
             </div>
           </section>
-          {tab === "Overview" && (
-            <Overview
-              event={event}
-              go={go}
-              toggleTask={toggleTask}
-              openItem={openItem}
-              saveIdea={saveIdea}
-              openIdea={setIdea}
-              ask={ask}
-            />
-          )}
-          {tab === "Budget" && (
-            <BudgetView
-              event={event}
-              update={update}
-              openItem={openItem}
-              ask={ask}
-            />
-          )}
-          {tab === "Timeline" && (
-            <TimelineView
-              event={event}
-              toggleTask={toggleTask}
-              openItem={openItem}
-              notify={notify}
-            />
-          )}
-          {tab === "Vendors" && (
-            <VendorsView event={event} update={update} openItem={openItem} />
-          )}
-          {tab === "Guest list" && (
-            <GuestsView event={event} update={update} openItem={openItem} />
-          )}
-          {tab === "Inspiration" && (
-            <InspirationView
-              event={event}
-              savedOnly={savedOnly}
-              setSavedOnly={setSavedOnly}
-              saveIdea={saveIdea}
-              openIdea={setIdea}
-              ask={ask}
-            />
-          )}
+          <Suspense
+            fallback={
+              <div className="panel view-loading" role="status">
+                Opening your planning tools…
+              </div>
+            }
+          >
+            {tab === "Overview" && (
+              <Overview
+                event={event}
+                go={go}
+                toggleTask={toggleTask}
+                openItem={openItem}
+                saveIdea={saveIdea}
+                openIdea={setIdea}
+                ask={ask}
+              />
+            )}
+            {tab === "Budget" && (
+              <BudgetView
+                event={event}
+                update={update}
+                openItem={openItem}
+                ask={ask}
+              />
+            )}
+            {tab === "Timeline" && (
+              <TimelineView
+                event={event}
+                toggleTask={toggleTask}
+                openItem={openItem}
+                notify={notify}
+              />
+            )}
+            {tab === "Vendors" && (
+              <VendorsView event={event} update={update} openItem={openItem} />
+            )}
+            {tab === "Guest list" && (
+              <GuestsView event={event} update={update} openItem={openItem} />
+            )}
+            {tab === "Inspiration" && (
+              <InspirationView
+                event={event}
+                savedOnly={savedOnly}
+                setSavedOnly={setSavedOnly}
+                saveIdea={saveIdea}
+                openIdea={setIdea}
+                ask={ask}
+              />
+            )}
+          </Suspense>
           <footer className="main-footer">
             <span>
               <Flower2 size={14} />A little together goes a long way.
@@ -626,7 +627,8 @@ export default function PlannerApp() {
           event={event}
           prompt={assistantPrompt}
           liveAI={liveAI}
-          close={() => setAssistantOpen(false)}
+          requiresSignIn={requiresSignIn}
+          close={closeAssistant}
           addTask={(task) => {
             update((e) => ({ ...e, tasks: [...e.tasks, task] }));
             notify("Added to your timeline.");
@@ -652,6 +654,7 @@ export default function PlannerApp() {
         <EventForm
           event={modal === "edit-event" ? event : undefined}
           liveAI={liveAI}
+          requiresSignIn={requiresSignIn}
           close={closeModal}
           save={createOrUpdate}
         />
@@ -663,7 +666,6 @@ export default function PlannerApp() {
         <ItemForm
           kind={modal}
           item={editing}
-          event={event}
           close={closeModal}
           save={itemSave}
           remove={removeItem}
@@ -671,8 +673,21 @@ export default function PlannerApp() {
       )}
       {modal === "settings" && (
         <SettingsForm
+          restore={restoreBackup}
+          recovery={() => {
+            try {
+              const raw = recoveryBackup();
+              if (raw)
+                downloadFile(raw, "gather-recovery.json", "application/json");
+            } catch {
+              notify(
+                "Browser recovery is unavailable. Download your current backup instead.",
+              );
+            }
+          }}
           profile={store.profile}
           liveAI={liveAI}
+          requiresSignIn={requiresSignIn}
           close={closeModal}
           save={(profile) => {
             setStore({ ...store, profile });
@@ -758,7 +773,10 @@ export default function PlannerApp() {
       )}
       {idea && (
         <Modal title={idea.title} subtitle={idea.tag} close={closeIdea}>
-          <img
+          <Image
+            width={1200}
+            height={800}
+            unoptimized
             className="idea-detail-image"
             src={idea.image}
             alt={idea.title}

@@ -1,6 +1,95 @@
 "use client";
-import { useEffect, useRef, type ReactNode } from "react";
+import {
+  cloneElement,
+  useEffect,
+  useEffectEvent,
+  useId,
+  useRef,
+  type ReactElement,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { X, ArrowUpRight, Plus } from "lucide-react";
+
+export function useDialog(
+  ref: RefObject<HTMLElement | null>,
+  close: () => void,
+) {
+  const dismiss = useEffectEvent(close);
+  useEffect(() => {
+    const dialog = ref.current;
+    if (!dialog) return;
+    const previous =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    const oldOverflow = document.body.style.overflow;
+    const background = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        ".sidebar, .main-shell, .assistant-fab",
+      ),
+    );
+    const inert = background.map((element) => element.inert ?? false);
+    background.forEach((element) => {
+      element.inert = true;
+    });
+    document.body.style.overflow = "hidden";
+    const focusable = () =>
+      Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'button,input,select,textarea,a[href],[tabindex="0"]',
+        ),
+      ).filter(
+        (element) =>
+          !element.matches(":disabled,[hidden]") &&
+          !element.closest("[hidden],[inert]"),
+      );
+    (
+      dialog.querySelector<HTMLElement>(
+        "input:not(:disabled),textarea:not(:disabled)",
+      ) ??
+      focusable()[0] ??
+      dialog
+    ).focus();
+    const listener = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        dismiss();
+      }
+      if (event.key !== "Tab") return;
+      const elements = focusable();
+      const first = elements[0],
+        last = elements.at(-1);
+      if (!first) {
+        event.preventDefault();
+        dialog.focus();
+      } else if (
+        event.shiftKey &&
+        (document.activeElement === first ||
+          !dialog.contains(document.activeElement))
+      ) {
+        event.preventDefault();
+        last?.focus();
+      } else if (
+        !event.shiftKey &&
+        (document.activeElement === last ||
+          !dialog.contains(document.activeElement))
+      ) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", listener);
+    return () => {
+      document.removeEventListener("keydown", listener);
+      document.body.style.overflow = oldOverflow;
+      background.forEach((element, index) => {
+        element.inert = inert[index];
+      });
+      if (previous?.isConnected) previous.focus();
+    };
+  }, [ref]);
+}
 
 export function Modal({
   title,
@@ -16,39 +105,9 @@ export function Modal({
   wide?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
-    const oldOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    ref.current
-      ?.querySelector<HTMLElement>("input,button,select,textarea")
-      ?.focus();
-    const listener = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
-      if (e.key === "Tab") {
-        const elements = Array.from(
-          ref.current?.querySelectorAll<HTMLElement>(
-            'button:not([disabled]),input,select,textarea,a[href],[tabindex="0"]',
-          ) ?? [],
-        );
-        const first = elements[0],
-          last = elements[elements.length - 1];
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last?.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first?.focus();
-        }
-      }
-    };
-    document.addEventListener("keydown", listener);
-    return () => {
-      document.body.style.overflow = oldOverflow;
-      document.removeEventListener("keydown", listener);
-      previous?.focus();
-    };
-  }, [close]);
+  const titleId = useId(),
+    descriptionId = useId();
+  useDialog(ref, close);
   return (
     <div
       className="modal-backdrop"
@@ -61,13 +120,15 @@ export function Modal({
         className={`modal ${wide ? "modal-wide" : ""}`}
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        aria-labelledby={titleId}
+        aria-describedby={subtitle ? descriptionId : undefined}
+        tabIndex={-1}
       >
         <div className="modal-head">
           <div>
             <span className="eyebrow">A LITTLE LESS TO THINK ABOUT</span>
-            <h2>{title}</h2>
-            {subtitle && <p>{subtitle}</p>}
+            <h2 id={titleId}>{title}</h2>
+            {subtitle && <p id={descriptionId}>{subtitle}</p>}
           </div>
           <button
             className="icon-button"
@@ -141,15 +202,24 @@ export function Field({
   hint,
 }: {
   label: string;
-  children: ReactNode;
+  children: ReactElement<{ id?: string; "aria-describedby"?: string }>;
   hint?: string;
 }) {
+  const generatedId = useId();
+  const id = children.props.id ?? generatedId;
+  const hintId = `${id}-hint`;
   return (
-    <label className="field">
-      <span>{label}</span>
-      {children}
-      {hint && <small>{hint}</small>}
-    </label>
+    <div className="field">
+      <label htmlFor={id}>{label}</label>
+      {cloneElement(children, {
+        id,
+        "aria-describedby":
+          [children.props["aria-describedby"], hint ? hintId : undefined]
+            .filter(Boolean)
+            .join(" ") || undefined,
+      })}
+      {hint && <small id={hintId}>{hint}</small>}
+    </div>
   );
 }
 export function downloadFile(

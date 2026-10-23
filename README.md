@@ -1,60 +1,69 @@
 # Gather
 
-A complete celebration workspace for weddings, birthdays, and community events. Built with React 19, TypeScript, Vinext, and a server-side Gemini REST integration. The interface uses sage, warm ivory, terracotta, editorial typography, and locally bundled photography and fonts.
+An event planning workspace for weddings, birthdays and community celebrations. React 19, strict TypeScript, Vinext/Vite, a Cloudflare Worker, Zod validation and a server-side Gemini REST integration. Photography and fonts are bundled locally.
 
 ## Run locally
 
-Requires Node.js 22.13 or newer.
+Requires Node.js 22.13+ (Node 24 LTS recommended).
 
 ```powershell
-npm ci
+npm ci --legacy-peer-deps
+npm run build
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_regular_speed.sql
 npm run dev
 ```
 
-Open the Local URL printed by the server (normally `http://127.0.0.1:5173`). On machines whose npm shell shim fails, invoke npm's installed JavaScript entrypoint directly; dependencies are already installed in this workspace.
+Apply the migration once to a new local database. Do not replay it against an existing migrated database. Local preview data is separate from hosted D1. Open the Local URL printed by the server. The Sites deployment workflow applies hosted schema migrations automatically.
 
-## Enable Gemini
+## Gemini
 
-1. Create a key in [Google AI Studio](https://aistudio.google.com/apikey).
-2. Copy `.env.example` to `.env.local` and fill in `GEMINI_API_KEY` locally. Never commit or paste your key into browser code.
-3. Set `GEMINI_MODEL` to a text model available to your Google project. The default (`gemini-3.5-flash-lite`) was selected from the account’s live model catalog for fast, efficient planning.
-4. Restart the development server. Settings will display “Connected.”
+Copy `.env.example` to ignored `.env.local` and fill in `GEMINI_API_KEY`. Set `GEMINI_MODEL` to a text model available to your project (default: `gemini-3.5-flash-lite`). Restart the server after changing environment values. For hosted deployment, use Sites runtime secrets. Never put credentials in client code or commit environment files.
 
-For a hosted Sites deployment, configure `GEMINI_API_KEY` as a secret runtime environment variable and optionally `GEMINI_MODEL`, then redeploy. Cloudflare also supports an ignored `.dev.vars` file for local Worker bindings. The server reads Worker bindings first and local process environment second.
+Public visitors can explore and create editable built-in plans. Personalized Gemini planning requires ChatGPT sign-in on the hosted site. Sign-in uses the platform's top-level navigation flow. Local development permits Gemini on loopback only; production builds do not enable this development exception. Built-in mode is explicitly labeled and never calls an LLM. Provider errors are displayed without silently substituting a template.
 
-No key is needed to explore the app: a clearly labeled built-in mode creates type-specific templates and contextual planning guidance. This mode uses deterministic templates; it does not call an LLM. Live Gemini generation includes a personalized plan and context-aware assistant conversation. Provider errors are shown explicitly rather than silently substituted with template output.
+## Features
 
-## What works
+- Create, switch and edit wedding, birthday and community events.
+- Generate and display a personalized summary, timeline, ideas and vendor role placeholders.
+- Shift unfinished tasks when an event date changes; keep completed history intact.
+- Manage tasks, expenses, vendor booking stages/checklists, guests, dietary/accessibility notes and RSVPs.
+- Track exact amounts in paise, with paid/unpaid totals, suggested allocations and over-budget warnings.
+- Bookmark ideas, request contextual AI advice and add follow-up tasks. Cancel an in-progress assistant response.
+- Export a text plan, a standards-compliant calendar or JSON backup. Restore backups by merging new events without replacing existing events.
+- Preserve unreadable saves for recovery; report full or unavailable storage; synchronize valid changes from another tab.
+- Keyboard dialogs with focus trapping/restoration, inert background, associated form labels/hints, status announcements, selected states, skip navigation and reduced motion.
+- Separate view modules; secondary screens load on demand.
 
-- Create and switch between events; edit event details, budget and guest target.
-- Generate personalized timelines, ideas and vendor role placeholders.
-- Create, edit, delete and complete tasks; filter timeline; export an ICS calendar.
-- Record and edit categorized expenses; toggle paid status; view actual spending, available funds, suggested allocations and over-budget warnings.
-- Track vendor contacts, quotes, booking stages and four-step checklists. Vendor quotes are separate from recorded expenses.
-- Manage guests, groups, dietary/accessibility notes and RSVPs; search and filter the guest list.
-- Explore ideas, bookmark them, view details, and ask the assistant for help.
-- Download a complete text plan or JSON backup; customize the workspace name.
-- Responsive mobile navigation, keyboard focus styles, reduced motion support, labeled forms and dialogs with focus management.
+## Architecture
+
+`lib/model.ts` defines the shared runtime and TypeScript contracts. `templates`, `budget`, `format`, `calendar`, `exports` and `state` contain pure domain operations. `persistence.ts` owns browser storage; React consumes stable snapshots through `useSyncExternalStore`. Each planning screen has its own module under `components/views/`.
+
+The route in `app/api/plan/route.ts` only wires Worker bindings to the testable API service. Request parsing, quotas, provider transport, schemas and deterministic guidance are separate modules in `lib/server/`. Provider requests use bounded token limits, cancellation and timeouts. Generated plans must pass runtime validation before reaching the UI.
 
 ## Data and security
 
-Event data is validated and versioned in browser local storage. This is a single-device workspace; it does not include cloud synchronization or collaboration. Clearing browser data removes local plans. Export a copy when needed. JSON backups are provided for safekeeping; the UI does not currently restore them.
+Event records remain in this browser on this device. There is no cloud event synchronization or collaboration. Backups can contain personal guest data: keep them somewhere you trust. Storage failures retain usable in-memory plans and display a persistent export reminder. Invalid backup data, duplicate IDs, unknown categories, remote idea images and excessive record counts are rejected.
 
-Only sanitized event context, total recorded spending, a short task list and the last eight chat turns are sent to Gemini when a user requests AI help. Guest records, emails and vendor contacts are excluded. AI output is rendered as plain React text. API keys never reach the client bundle.
+The hosted paid API requires a platform-authenticated user ID and a D1 binding. An atomic SQL counter enforces 25 requests per identity per fixed ten-minute window across Worker instances. D1 stores only a SHA-256 identity hash, the counter and its expiry; no event or guest records. Paid hosted requests fail closed if persistent quota storage is unavailable. Free templates and local development use bounded in-memory counters.
 
-The API validates requests with Zod, limits request bodies and chat history, rejects cross-origin requests, uses provider timeouts, and avoids exposing upstream errors. New Sites are private. Rate limits are best-effort per Worker isolate (25 requests per 10 minutes per identity); a public, multi-instance launch should use a shared limiter and authenticated authorization.
+Only event details, recorded spending, up to eight outstanding tasks and the last eight chat turns are sent for AI help. Guest records, emails and vendor contacts are excluded. Origin/media checks, streamed body limits, validated dates/money, generic upstream errors, no-store API responses and plain-text React rendering protect the request/response boundary. The hosted site's existing audience is preserved.
 
 ## Verification
 
 ```powershell
-npm run typecheck
-npm test
+npm run check
+npm run test:coverage
 npm run test:api
 npm run build
+npm audit --omit=dev
 ```
 
-`test:api` expects the development server to be running. It checks validation, cross-origin rejection, body size limits, all event types and built-in conversational context. It skips live Gemini generation when a key is configured. Browser checks cover event creation, task completion, expense accounting, guest creation, bookmarks, assistant responses and the mobile layout. Live Gemini plan generation and an in-app conversation were also verified with the configured server credential. Numerical budget snapshots are calculated by application code; Gemini provides the accompanying planning advice.
+`test:api` expects a local server and always exercises explicitly selected built-in plans for all three event types, validation, body size limits, origin rejection and contextual chat. `TEST_BASE_URL` overrides its default URL. It does not spend Gemini quota. The Vitest suite covers domain logic, storage failure/recovery, the API, provider failures, real SQLite quota SQL, component interactions and the full expense/RSVP workflow. Axe checks every planning screen and key dialogs in jsdom; layout-dependent contrast checks cannot run in jsdom.
 
-The production build targets a Cloudflare Worker using the retained Sites build integration. `npm start` previews the built Worker locally. The source and the deployment manifest are under `.openai/hosting.json`.
+Coverage reports are written to ignored `coverage/`. The maintained Sites integration and its template components are retained. `npm start` previews the production Worker locally using `.wrangler/state`.
 
-Photography: [Unsplash](https://unsplash.com). Fonts: DM Sans, Manrope, Playfair Display via Google Fonts, bundled locally. Gemini API shape verified against [Google’s structured output documentation](https://ai.google.dev/gemini-api/docs/generate-content/structured-output).
+For live Gemini in the built Worker preview, pass `npm start -- --env-file ../../.env.local` (Wrangler resolves that path from `dist/server/`). The Vite development server reads the root `.env.local` automatically.
+
+See [QUALITY.md](QUALITY.md) for verification evidence and limits. An external evaluation score is determined by its evaluator; these checks do not certify a perfect score.
+
+Photography: [Unsplash](https://unsplash.com). Fonts: DM Sans, Manrope and Playfair Display, bundled locally. Gemini API format: [official structured output documentation](https://ai.google.dev/gemini-api/docs/generate-content/structured-output).

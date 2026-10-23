@@ -23,6 +23,8 @@ import {
   todayISO,
   uid,
   dateOffset,
+  editEvent,
+  LIMITS,
   type Celebration,
   type EventType,
   type Expense,
@@ -30,23 +32,28 @@ import {
   type Task,
   type Vendor,
 } from "@/lib/planner";
-import type { ItemKind } from "./planner-app";
+import type { ItemKind } from "@/lib/model";
+import { readApiResponse, SIGN_IN_PATH } from "@/lib/api-client";
 import { Field, Modal } from "./ui";
 
 export function EventForm({
   event,
   liveAI,
+  requiresSignIn = false,
   close,
   save,
 }: {
   event?: Celebration;
   liveAI: boolean;
+  requiresSignIn?: boolean;
   close: () => void;
   save: (event: Celebration) => void;
 }) {
   const [type, setType] = useState<EventType>(event?.type ?? "Wedding"),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  const [moveTasks, setMoveTasks] = useState(true);
+  const [useAI, setUseAI] = useState(liveAI && !requiresSignIn);
   const request = useRef<AbortController | null>(null);
   useEffect(() => () => request.current?.abort(), []);
   async function submit(e: FormEvent<HTMLFormElement>) {
@@ -67,35 +74,37 @@ export function EventForm({
       return;
     }
     if (event) {
-      save({ ...event, ...parsed.data });
+      save(editEvent(event, parsed.data, moveTasks));
       return;
     }
     setBusy(true);
-    request.current = new AbortController();
-    const timeout = setTimeout(() => request.current?.abort(), 40000);
+    const controller = new AbortController();
+    request.current = controller;
+    const timeout = setTimeout(() => controller.abort(), 40000);
     try {
       const response = await fetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "plan", event: parsed.data }),
-        signal: request.current.signal,
+        body: JSON.stringify({
+          action: "plan",
+          mode: useAI ? "auto" : "built-in",
+          event: parsed.data,
+        }),
+        signal: controller.signal,
       });
-      const payload = (await response.json()) as {
-        error?: string;
-        event?: unknown;
-      };
-      if (!response.ok)
-        throw new Error(
-          payload.error ?? "Your plan couldn’t be generated. Please try again.",
-        );
-      const result = eventSchema.safeParse(payload.event);
+      const payload = await readApiResponse(response);
+      const result = eventSchema.safeParse(
+        typeof payload === "object" && payload !== null && "event" in payload
+          ? payload.event
+          : undefined,
+      );
       if (!result.success)
         throw new Error(
           "We couldn’t read the generated plan. Please try again.",
         );
-      if (!request.current.signal.aborted) save(result.data);
+      if (!controller.signal.aborted) save(result.data);
     } catch (err) {
-      if (request.current.signal.aborted)
+      if (controller.signal.aborted)
         setError("Planning took a little too long. Please try again.");
       else
         setError(
@@ -120,127 +129,165 @@ export function EventForm({
       wide
     >
       <form onSubmit={submit} className="event-form">
-        <div className="event-type-options">
-          {(
-            [
-              {
-                name: "Wedding",
-                icon: Heart,
-                note: "Your forever kind of day",
-              },
-              {
-                name: "Birthday",
-                icon: PartyPopper,
-                note: "Another year of wonderful",
-              },
-              {
-                name: "Community",
-                icon: Users,
-                note: "Better when we’re together",
-              },
-            ] as const
-          ).map(({ name, icon: Icon, note }) => (
-            <button
-              type="button"
-              key={name}
-              className={type === name ? "selected" : ""}
-              onClick={() => setType(name)}
-              aria-pressed={type === name}
-            >
-              <Icon size={24} strokeWidth={1.4} />
-              <strong>{name}</strong>
-              <small>{note}</small>
-              {type === name && (
-                <span className="type-check">
-                  <Check size={11} />
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-        <Field label="Give your celebration a name">
-          <input
-            name="name"
-            required
-            minLength={2}
-            maxLength={100}
-            placeholder={
-              type === "Wedding"
-                ? "e.g. Maya & Arjun’s wedding"
-                : type === "Birthday"
-                  ? "e.g. Aanya’s 25th birthday"
-                  : "e.g. Our neighborhood garden party"
-            }
-            defaultValue={event?.name}
-          />
-        </Field>
-        <div className="form-grid">
-          <Field label="The big day">
+        <fieldset
+          className="form-fields"
+          disabled={busy}
+          aria-label="Celebration details"
+        >
+          <div className="event-type-options">
+            {(
+              [
+                {
+                  name: "Wedding",
+                  icon: Heart,
+                  note: "Your forever kind of day",
+                },
+                {
+                  name: "Birthday",
+                  icon: PartyPopper,
+                  note: "Another year of wonderful",
+                },
+                {
+                  name: "Community",
+                  icon: Users,
+                  note: "Better when we’re together",
+                },
+              ] as const
+            ).map(({ name, icon: Icon, note }) => (
+              <button
+                type="button"
+                key={name}
+                className={type === name ? "selected" : ""}
+                onClick={() => setType(name)}
+                aria-pressed={type === name}
+              >
+                <Icon size={24} strokeWidth={1.4} />
+                <strong>{name}</strong>
+                <small>{note}</small>
+                {type === name && (
+                  <span className="type-check">
+                    <Check size={11} />
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+          <Field label="Give your celebration a name">
             <input
-              name="date"
-              type="date"
-              required
-              min={event ? undefined : todayISO()}
-              defaultValue={event?.date ?? dateOffset(todayISO(), 60)}
-            />
-          </Field>
-          <Field label="Where’s the celebration?">
-            <input
-              name="location"
+              name="name"
               required
               minLength={2}
-              maxLength={120}
-              placeholder="City, venue or a little of both"
-              defaultValue={event?.location}
+              maxLength={100}
+              placeholder={
+                type === "Wedding"
+                  ? "e.g. Maya & Arjun’s wedding"
+                  : type === "Birthday"
+                    ? "e.g. Aanya’s 25th birthday"
+                    : "e.g. Our neighborhood garden party"
+              }
+              defaultValue={event?.name}
             />
           </Field>
-          <Field label="Your total budget (₹)">
-            <input
-              name="budget"
-              type="number"
-              min={100}
-              max={100000000}
-              step="1"
-              required
-              placeholder="e.g. 500000"
-              defaultValue={event?.budget}
+          <div className="form-grid">
+            <Field label="The big day">
+              <input
+                name="date"
+                type="date"
+                required
+                min={event ? undefined : todayISO()}
+                defaultValue={event?.date ?? dateOffset(todayISO(), 60)}
+              />
+            </Field>
+            <Field label="Where’s the celebration?">
+              <input
+                name="location"
+                required
+                minLength={2}
+                maxLength={120}
+                placeholder="City, venue or a little of both"
+                defaultValue={event?.location}
+              />
+            </Field>
+            <Field label="Your total budget (₹)">
+              <input
+                name="budget"
+                type="number"
+                min={100}
+                max={100000000}
+                step="0.01"
+                required
+                placeholder="e.g. 500000"
+                defaultValue={event?.budget}
+              />
+            </Field>
+            <Field label="How many happy faces?">
+              <input
+                name="guestCount"
+                type="number"
+                min={1}
+                max={100000}
+                step={1}
+                required
+                placeholder="e.g. 100"
+                defaultValue={event?.guestCount}
+              />
+            </Field>
+          </div>
+          <Field
+            label="Tell us your kind of magic"
+            hint="Colors, traditions, favorite things, dietary needs… whatever makes it yours."
+          >
+            <textarea
+              name="vibe"
+              maxLength={300}
+              rows={3}
+              placeholder="An intimate garden celebration, warm earthy colors, seasonal food and lots of fairy lights…"
+              defaultValue={event?.vibe}
             />
           </Field>
-          <Field label="How many happy faces?">
-            <input
-              name="guestCount"
-              type="number"
-              min={1}
-              max={100000}
-              step={1}
-              required
-              placeholder="e.g. 100"
-              defaultValue={event?.guestCount}
-            />
-          </Field>
-        </div>
-        <Field
-          label="Tell us your kind of magic"
-          hint="Colors, traditions, favorite things, dietary needs… whatever makes it yours."
-        >
-          <textarea
-            name="vibe"
-            maxLength={300}
-            rows={3}
-            placeholder="An intimate garden celebration, warm earthy colors, seasonal food and lots of fairy lights…"
-            defaultValue={event?.vibe}
-          />
-        </Field>
-        <div className="note form-ai-note">
-          <Sparkles size={19} />
-          <p>
-            {event
-              ? "Your tasks, expenses and guest list stay together. Adjust dates in Timeline if your event date changes."
-              : liveAI
-                ? "Gemini will create a personalized timeline, vendor checklist and celebration ideas from your details."
-                : "Start with a thoughtful built-in plan. Live Gemini generation is available once your server API key is connected."}
-          </p>
-        </div>
+          {event ? (
+            <label className="checkbox-field">
+              <input
+                type="checkbox"
+                checked={moveTasks}
+                onChange={(e) => setMoveTasks(e.target.checked)}
+              />
+              Move unfinished tasks by the same number of days if the event date
+              changes. Completed tasks keep their dates.
+            </label>
+          ) : (
+            <div className="planning-mode">
+              {liveAI && !requiresSignIn && (
+                <label className="checkbox-field">
+                  <input
+                    type="checkbox"
+                    checked={useAI}
+                    onChange={(e) => setUseAI(e.target.checked)}
+                  />
+                  Personalize this plan with Gemini
+                </label>
+              )}
+              {requiresSignIn && (
+                <p>
+                  <a href={SIGN_IN_PATH} target="_top">
+                    Sign in with ChatGPT
+                  </a>{" "}
+                  for Gemini personalization, or create a built-in plan now.
+                </p>
+              )}
+            </div>
+          )}
+          <div className="note form-ai-note">
+            <Sparkles size={19} />
+            <p>
+              {event
+                ? "Your expenses, vendor details and guest list stay together when you update this event."
+                : useAI
+                  ? "Gemini will create a personalized timeline, vendor checklist and celebration ideas from your details."
+                  : "Start with an editable built-in timeline, budget allocation, vendor checklist and celebration ideas."}
+            </p>
+          </div>
+        </fieldset>
         {error && (
           <p className="form-error" role="alert">
             {error}
@@ -279,24 +326,23 @@ type Item = Task | Expense | Vendor | Guest;
 export function ItemForm({
   kind,
   item,
-  event,
   close,
   save,
   remove,
 }: {
   kind: ItemKind;
   item?: Item;
-  event: Celebration;
   close: () => void;
   save: (kind: ItemKind, item: Item) => void;
   remove: (kind: ItemKind, id: string) => void;
 }) {
   const [error, setError] = useState(""),
     [confirmDelete, setConfirmDelete] = useState(false);
-  const task = kind === "task" ? (item as Task | undefined) : undefined,
-    expense = kind === "expense" ? (item as Expense | undefined) : undefined,
-    vendor = kind === "vendor" ? (item as Vendor | undefined) : undefined,
-    guest = kind === "guest" ? (item as Guest | undefined) : undefined;
+  const task = kind === "task" && item && "title" in item ? item : undefined,
+    expense = kind === "expense" && item && "amount" in item ? item : undefined,
+    vendor =
+      kind === "vendor" && item && "checklist" in item ? item : undefined,
+    guest = kind === "guest" && item && "rsvp" in item ? item : undefined;
   const labels = {
     task: ["A little to-do.", "Make a little space for the next step."],
     expense: [
@@ -361,7 +407,8 @@ export function ItemForm({
     }[kind];
     const result = schema.safeParse(value);
     if (!result.success) {
-      setError("A detail doesn’t look quite right. Please check the form.");
+      const issue = result.error.issues[0];
+      setError(`${issue.path.join(" ") || "Detail"}: ${issue.message}`);
       return;
     }
     save(kind, result.data);
@@ -573,16 +620,25 @@ export function ItemForm({
 export function SettingsForm({
   profile,
   liveAI,
+  requiresSignIn = false,
   close,
   save,
   backup,
+  restore,
+  recovery,
 }: {
   profile: string;
   liveAI: boolean;
+  requiresSignIn?: boolean;
   close: () => void;
   save: (name: string) => void;
   backup: () => void;
+  restore: (raw: string) => string;
+  recovery: () => void;
 }) {
+  const [result, setResult] = useState("");
+  const [error, setError] = useState("");
+  const [restoring, setRestoring] = useState(false);
   return (
     <Modal
       title="Make yourself at home."
@@ -617,8 +673,10 @@ export function SettingsForm({
           </div>
           <p>
             {liveAI
-              ? "Your AI assistant is ready. API credentials are held securely on the server."
-              : "The app works with built-in planning templates. To enable live AI, set GEMINI_API_KEY in your server environment and restart or redeploy. Never put your key in browser code."}
+              ? requiresSignIn
+                ? "Sign in with ChatGPT to use personalized Gemini planning. Built-in plans are available now."
+                : "Your AI assistant is ready. API credentials are held securely on the server."
+              : "Editable built-in plans and guidance are available. Live AI is temporarily unavailable."}
           </p>
         </div>
         <div className="settings-block">
@@ -638,6 +696,48 @@ export function SettingsForm({
             <Download size={15} />
             Download backup
           </button>
+          <Field
+            label="Restore a Gather backup"
+            hint="JSON files up to 5 MB. New events are added; existing events are kept."
+          >
+            <input
+              type="file"
+              accept=".json,application/json"
+              disabled={restoring}
+              onChange={async (event) => {
+                const input = event.currentTarget;
+                const file = input.files?.[0];
+                if (!file) return;
+                setError("");
+                setResult("");
+                setRestoring(true);
+                try {
+                  if (file.size > LIMITS.backupBytes)
+                    throw new Error("Choose a backup smaller than 5 MB.");
+                  setResult(restore(await file.text()));
+                } catch (error) {
+                  setError(
+                    error instanceof Error
+                      ? error.message
+                      : "This backup could not be restored.",
+                  );
+                } finally {
+                  setRestoring(false);
+                  input.value = "";
+                }
+              }}
+            />
+          </Field>
+          <button type="button" className="text-button" onClick={recovery}>
+            Download browser recovery copy
+          </button>
+          {restoring && <p role="status">Reading your backup…</p>}
+          {result && <p role="status">{result}</p>}
+          {error && (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          )}
         </div>
         <div className="modal-actions">
           <button className="button secondary" type="button" onClick={close}>

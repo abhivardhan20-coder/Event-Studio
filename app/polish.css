@@ -19,44 +19,44 @@
   font-size: 12px;
 }
 .stat-top {
-  font-size: 10px;
+  font-size: 11px;
 }
 .stat-number {
   font-size: 25px;
 }
 .stat-number small {
-  font-size: 9px;
+  font-size: 11px;
 }
 .stat-bottom {
-  font-size: 8.5px;
+  font-size: 11px;
 }
 .section-heading p {
-  font-size: 10px;
+  font-size: 11px;
 }
 .text-button {
-  font-size: 10px;
+  font-size: 11px;
 }
 .task-description strong {
   font-size: 11px;
 }
 .task-description span {
-  font-size: 9px;
+  font-size: 11px;
 }
 .due-tag {
-  font-size: 8px;
+  font-size: 11px;
 }
 .add-task-inline {
-  font-size: 9px;
+  font-size: 11px;
 }
 .compact .chart-legend > div,
 .compact .chart-legend strong {
-  font-size: 9px;
+  font-size: 11px;
 }
 .budget-panel-note {
-  font-size: 8px;
+  font-size: 11px;
 }
 .event-meta {
-  font-size: 9px;
+  font-size: 11px;
 }
 .event-switch select {
   width: 110px;
@@ -64,16 +64,16 @@
   padding: 5px 8px;
   border: 1px solid #e6eadf;
   border-radius: 5px;
-  color: #839276;
-  font-size: 8px;
+  color: #65715a;
+  font-size: 11px;
   background: #fafbf5;
   margin-right: 5px;
 }
 .idea-card-body > span {
-  font-size: 8.5px;
+  font-size: 11px;
 }
 .main-footer {
-  font-size: 8px;
+  font-size: 11px;
 }
 @media (max-height: 850px) and (min-width: 901px) {
   .hero {
@@ -86,38 +86,38 @@
 }
 @media (max-width: 1200px) {
   .stat-top {
-    font-size: 8px;
+    font-size: 11px;
   }
   .stat-number {
     font-size: 23px;
   }
   .stat-number small {
-    font-size: 7px;
+    font-size: 11px;
   }
   .stat-bottom {
-    font-size: 7px;
+    font-size: 11px;
   }
   .compact .chart-legend > div,
   .compact .chart-legend strong {
-    font-size: 7px;
+    font-size: 11px;
   }
   .section-heading p {
-    font-size: 8px;
+    font-size: 11px;
   }
   .task-description strong {
-    font-size: 10px;
+    font-size: 11px;
   }
   .task-description span {
-    font-size: 8px;
+    font-size: 11px;
   }
   .due-tag {
-    font-size: 7px;
+    font-size: 11px;
   }
   .budget-panel-note {
-    font-size: 7px;
+    font-size: 11px;
   }
   .event-meta {
-    font-size: 8px;
+    font-size: 11px;
   }
 }
 @media (max-width: 900px) {
@@ -128,10 +128,10 @@
     display: none;
   }
   .section-heading p {
-    font-size: 9px;
+    font-size: 11px;
   }
   .text-button {
-    font-size: 9px;
+    font-size: 11px;
   }
 }
 @media (max-width: 740px) {
@@ -139,23 +139,23 @@
     height: 265px;
   }
   .stat-top {
-    font-size: 10px;
+    font-size: 11px;
   }
   .stat-number {
     font-size: 27px;
   }
   .stat-number small {
-    font-size: 9px;
+    font-size: 11px;
   }
   .stat-bottom {
-    font-size: 8px;
+    font-size: 11px;
   }
   .compact .chart-legend > div,
   .compact .chart-legend strong {
-    font-size: 7px;
+    font-size: 11px;
   }
   .event-meta {
-    font-size: 8px;
+    font-size: 11px;
   }
 }
 @media (max-width: 520px) {
@@ -166,43 +166,43 @@
     padding-top: 28px;
   }
   .stat-top {
-    font-size: 8.5px;
+    font-size: 11px;
   }
   .stat-number {
     font-size: 24px;
   }
   .stat-number small {
-    font-size: 7px;
+    font-size: 11px;
   }
   .stat-bottom {
-    font-size: 7px;
+    font-size: 11px;
   }
   .section-heading p {
-    font-size: 9px;
+    font-size: 11px;
   }
   .task-description strong {
     font-size: 11px;
   }
   .task-description span {
-    font-size: 9px;
+    font-size: 11px;
   }
   .due-tag {
-    font-size: 8px;
+    font-size: 11px;
   }
   .compact .chart-legend > div,
   .compact .chart-legend strong {
-    font-size: 8px;
+    font-size: 11px;
   }
   .budget-panel-note {
-    font-size: 8px;
+    font-size: 11px;
   }
   .event-meta {
-    font-size: 7px;
+    font-size: 11px;
   }
   .event-switch select {
     width: 220px;
     max-width: 220px;
-    font-size: 9px;
+    font-size: 11px;
     padding: 5px 8px;
   }
   .event-strip:has(select option:not(:only-child)) {
@@ -224,9 +224,9 @@
     padding-right: 50px;
   }
   .main-footer {
-    font-size: 7px;
+    font-size: 11px;
   }
   .idea-card-body > span {
-    font-size: 9px;
+    font-size: 11px;
   }
 }

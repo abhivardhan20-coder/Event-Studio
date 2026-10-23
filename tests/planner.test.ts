@@ -1,4 +1,4 @@
-import test from "node:test";
+import { test } from "vitest";
 import assert from "node:assert/strict";
 import {
   budgetAllocations,
@@ -92,10 +92,10 @@ test("budget allocation rounding always preserves the exact total", () => {
     for (const type of eventTypes) {
       assert.equal(
         budgetAllocations({ ...sample, type, budget }).reduce(
-          (sum, row) => sum + row.planned,
+          (sum, row) => sum + Math.round(row.planned * 100),
           0,
         ),
-        budget,
+        budget * 100,
       );
     }
   }

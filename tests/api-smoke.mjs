@@ -3,7 +3,7 @@ const base = process.env.TEST_BASE_URL ?? "http://127.0.0.1:5173";
 const input = {
   name: "API smoke celebration",
   type: "Wedding",
-  date: "2027-06-20",
+  date: new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10),
   location: "Bengaluru",
   budget: 200000,
   guestCount: 80,
@@ -35,9 +35,13 @@ assert.equal(
 );
 assert.equal((await post("{")).status, 400);
 assert.equal((await post("x".repeat(25000))).status, 413);
-if (!config.configured) {
+{
   for (const type of ["Wedding", "Birthday", "Community"]) {
-    const response = await post({ action: "plan", event: { ...input, type } });
+    const response = await post({
+      action: "plan",
+      mode: "built-in",
+      event: { ...input, type },
+    });
     assert.equal(response.status, 200);
     const data = await response.json();
     assert.equal(data.event.type, type);
@@ -47,6 +51,7 @@ if (!config.configured) {
   }
   const chat = await post({
     action: "chat",
+    mode: "built-in",
     event: input,
     spending: 2500,
     tasks: [],
@@ -59,7 +64,4 @@ if (!config.configured) {
   console.log(
     "API smoke checks passed: validation, origin check, size limit, all three event types, contextual chat.",
   );
-} else
-  console.log(
-    "API validation checks passed. Live Gemini generation was not called by this smoke test.",
-  );
+}
