@@ -73,6 +73,7 @@ export default function PlannerApp() {
         <main id="main-content" className="main-content" tabIndex={-1}>
           <WorkspaceIntro workspace={workspace} />
           <Suspense
+            key={event.id}
             fallback={
               <div className="panel view-loading" role="status">
                 Opening your planning tools…

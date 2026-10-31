@@ -1,5 +1,6 @@
 import { LIMITS, storeSchema, type PlannerStore } from "./model.ts";
-import { mergeBackup } from "./state.ts";
+import { mergeBackup, PlannerConflictError } from "./state.ts";
+import { exportBackup } from "./exports.ts";
 
 export const STORAGE_KEY = "gather-planner-v1";
 export const RECOVERY_KEY = `${STORAGE_KEY}-recovery`;
@@ -57,12 +58,6 @@ export function createPlannerRepository(
   function emit() {
     for (const listener of listeners) listener();
   }
-  function serialize(store: PlannerStore) {
-    const raw = JSON.stringify(store);
-    if (new TextEncoder().encode(raw).byteLength > LIMITS.backupBytes)
-      throw new Error(sizeWarning);
-    return raw;
-  }
   function persist(store: PlannerStore, raw: string, warning = "") {
     try {
       if (!writable || conflicted)
@@ -97,18 +92,18 @@ export function createPlannerRepository(
           const fresh = seed();
           persist(
             fresh,
-            serialize(fresh),
+            exportBackup(fresh),
             "Your previous save could not be read. A recovery copy was preserved; download it in Settings before restoring a valid backup.",
           );
         }
       } else {
         const fresh = seed();
-        persist(fresh, serialize(fresh));
+        persist(fresh, exportBackup(fresh));
       }
     } catch {
       writable = false;
       const fresh = seed();
-      persist(fresh, serialize(fresh));
+      persist(fresh, exportBackup(fresh));
     }
     emit();
   }
@@ -133,11 +128,13 @@ export function createPlannerRepository(
       } else {
         value = change;
       }
-    } catch {
+    } catch (error) {
       snapshot = {
         ...snapshot,
         warning:
-          "That change contains invalid details. Your existing plan was kept.",
+          error instanceof PlannerConflictError
+            ? error.message
+            : "That change contains invalid details. Your existing plan was kept.",
       };
       emit();
       return false;
@@ -154,7 +151,7 @@ export function createPlannerRepository(
     }
     let raw: string;
     try {
-      raw = serialize(next.data);
+      raw = exportBackup(next.data);
     } catch {
       snapshot = { ...snapshot, warning: sizeWarning };
       emit();

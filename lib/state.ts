@@ -10,6 +10,16 @@ import {
 } from "./model.ts";
 import { dateOffset, daysUntil } from "./format.ts";
 
+/** A stale editor must never overwrite work accepted from another tab. */
+export class PlannerConflictError extends Error {
+  constructor() {
+    super(
+      "Your plan changed in another tab. Your existing changes were kept. Close and reopen the form to edit the latest version.",
+    );
+    this.name = "PlannerConflictError";
+  }
+}
+
 /** Preserve completed history while moving outstanding tasks by the event date delta. */
 export function editEvent(
   event: Celebration,

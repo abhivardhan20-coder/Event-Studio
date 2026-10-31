@@ -1,6 +1,16 @@
-import type { Celebration } from "./model.ts";
+import { LIMITS, type Celebration, type PlannerStore } from "./model.ts";
 import { budgetTotals } from "./budget.ts";
 import { money, dateLabel } from "./format.ts";
+
+/** Use the same compact, byte-bounded representation for storage and downloads. */
+export function exportBackup(store: PlannerStore) {
+  const raw = JSON.stringify(store);
+  if (new TextEncoder().encode(raw).byteLength > LIMITS.backupBytes)
+    throw new Error(
+      "This workspace exceeds the 5 MB backup limit. Remove unneeded records before exporting.",
+    );
+  return raw;
+}
 
 export function exportPlan(event: Celebration) {
   const total = budgetTotals(event).recorded;

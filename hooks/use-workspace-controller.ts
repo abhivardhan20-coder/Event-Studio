@@ -5,11 +5,13 @@ import { useAIStatus } from "./use-ai-status";
 import {
   itemDialog,
   eventProgress,
+  matchesSnapshot,
   type OpenItem,
   type SimpleDialog,
   type WorkspaceDialog,
 } from "@/lib/workspace";
-import { removeItem, saveItem } from "@/lib/state";
+import { removeItem, saveItem, PlannerConflictError } from "@/lib/state";
+import { eventSchema } from "@/lib/model";
 import type {
   Celebration,
   Idea,
@@ -36,6 +38,7 @@ export function useWorkspaceController() {
   const event =
     store?.events.find((event) => event.id === store.activeId) ??
     store?.events[0];
+  const eventId = event?.id;
   const notify = useCallback((message: string) => setToast(message), []);
   const closeModal = useCallback(() => setDialog(null), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
@@ -46,17 +49,33 @@ export function useWorkspaceController() {
   }, [toast]);
   const update = useCallback(
     (updater: (event: Celebration) => Celebration) =>
-      setStore((current) => ({
-        ...current,
-        events: current.events.map((event) =>
-          event.id === current.activeId ? updater(event) : event,
-        ),
-      })),
-    [setStore],
+      setStore((current) => {
+        if (
+          !eventId ||
+          current.activeId !== eventId ||
+          !current.events.some((record) => record.id === eventId)
+        )
+          throw new PlannerConflictError();
+        return {
+          ...current,
+          events: current.events.map((record) =>
+            record.id === eventId ? updater(record) : record,
+          ),
+        };
+      }),
+    [eventId, setStore],
   );
   const setModal = (type: SimpleDialog | null) => {
     setSidebarOpen(false);
-    setDialog(type ? { type } : null);
+    setDialog(
+      type === "edit-event"
+        ? event
+          ? { type, event: eventSchema.parse(event) }
+          : null
+        : type
+          ? { type }
+          : null,
+    );
   };
   const openItem: OpenItem = (kind, item) => {
     if (!event) return;
@@ -96,13 +115,21 @@ export function useWorkspaceController() {
     const editing = dialog?.type === "edit-event";
     if (
       !store ||
+      (dialog?.type !== "event" && !editing) ||
       (editing && next.id !== event?.id) ||
       (!editing && store.events.some((event) => event.id === next.id))
     )
       return false;
     const committed = setStore((current) => {
-      if (editing && !current.events.some((event) => event.id === next.id))
-        throw new Error("The event changed while editing.");
+      if (
+        editing &&
+        (current.activeId !== dialog.event.id ||
+          !matchesSnapshot(
+            current.events.find((record) => record.id === next.id),
+            dialog.event,
+          ))
+      )
+        throw new PlannerConflictError();
       return {
         ...current,
         activeId: next.id,
@@ -132,19 +159,20 @@ export function useWorkspaceController() {
     const editor = dialog;
     if (
       !update((event) => {
-        if (event.id !== editor.eventId)
-          throw new Error("The event changed while editing.");
+        if (event.id !== editor.eventId) throw new PlannerConflictError();
         const records = {
           task: event.tasks,
           expense: event.expenses,
           vendor: event.vendors,
           guest: event.guests,
         }[kind];
+        const existing = records.find((record) => record.id === value.id);
         if (
-          editor.item &&
-          !records.some((record) => record.id === editor.item?.id)
+          editor.item
+            ? !matchesSnapshot(existing, editor.item)
+            : existing !== undefined
         )
-          throw new Error("This record was removed in another tab.");
+          throw new PlannerConflictError();
         return saveItem(event, kind, value);
       })
     )
@@ -167,8 +195,20 @@ export function useWorkspaceController() {
     const editor = dialog;
     if (
       !update((event) => {
-        if (event.id !== editor.eventId)
-          throw new Error("The event changed while editing.");
+        if (event.id !== editor.eventId) throw new PlannerConflictError();
+        const records = {
+          task: event.tasks,
+          expense: event.expenses,
+          vendor: event.vendors,
+          guest: event.guests,
+        }[kind];
+        if (
+          !matchesSnapshot(
+            records.find((record) => record.id === id),
+            editor.item,
+          )
+        )
+          throw new PlannerConflictError();
         return removeItem(event, kind, id);
       })
     )

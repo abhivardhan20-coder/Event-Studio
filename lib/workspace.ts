@@ -17,7 +17,8 @@ export type ItemDialog = {
   };
 }[ItemKind];
 export type WorkspaceDialog =
-  | { type: SimpleDialog }
+  | { type: Exclude<SimpleDialog, "edit-event"> }
+  | { type: "edit-event"; event: Celebration }
   | ItemDialog
   | { type: "assistant"; prompt: string }
   | { type: "idea"; idea: Idea };
@@ -25,6 +26,36 @@ export type OpenItem = <Kind extends ItemKind>(
   kind: Kind,
   item?: PlannerItems[Kind],
 ) => void;
+
+/** Compare validated JSON snapshots independently of object key insertion order. */
+export function matchesSnapshot(current: unknown, original: unknown): boolean {
+  if (Object.is(current, original)) return true;
+  if (
+    current === null ||
+    original === null ||
+    typeof current !== "object" ||
+    typeof original !== "object"
+  )
+    return false;
+  if (Array.isArray(current) || Array.isArray(original))
+    return (
+      Array.isArray(current) &&
+      Array.isArray(original) &&
+      current.length === original.length &&
+      current.every((value, index) => matchesSnapshot(value, original[index]))
+    );
+  const currentRecord = current as Record<string, unknown>;
+  const originalRecord = original as Record<string, unknown>;
+  const keys = Object.keys(originalRecord);
+  return (
+    Object.keys(currentRecord).length === keys.length &&
+    keys.every(
+      (key) =>
+        Object.hasOwn(currentRecord, key) &&
+        matchesSnapshot(currentRecord[key], originalRecord[key]),
+    )
+  );
+}
 
 /** Validate at the editor boundary, keeping the item kind and its value correlated. */
 export function itemDialog(

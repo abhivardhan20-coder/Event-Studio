@@ -23,6 +23,7 @@ import {
   type WorkspaceController,
 } from "../hooks/use-workspace-controller";
 import { WorkspaceDialogs } from "../components/workspace/dialogs";
+import PlannerApp from "../components/planner-app";
 import { seedStore } from "../lib/seed";
 import { storeSchema, type PlannerStore } from "../lib/model";
 
@@ -315,7 +316,178 @@ describe("transaction results", () => {
   });
 });
 
+describe("concurrent workspace edits", () => {
+  it("rejects an event save that would overwrite newer expenses", () => {
+    const { result, rerender } = renderHook(useWorkspaceController);
+    const original = structuredClone(currentStore.events[0]);
+    act(() => result.current.setModal("edit-event"));
+    currentStore = storeSchema.parse({
+      ...currentStore,
+      events: [
+        {
+          ...original,
+          expenses: [
+            ...original.expenses,
+            {
+              ...original.expenses[0],
+              id: "another-tab-expense",
+              name: "New deposit",
+            },
+          ],
+        },
+      ],
+    });
+    rerender();
+    const before = structuredClone(currentStore);
+    expect(
+      commit(() =>
+        result.current.createOrUpdate({
+          ...original,
+          name: "My renamed event",
+        }),
+      ),
+    ).toBe(false);
+    expect(currentStore).toEqual(before);
+    expect(result.current.dialog?.type).toBe("edit-event");
+    expect(result.current.toast).toBe("");
+  });
+
+  it.each(["task", "expense", "vendor", "guest"] as const)(
+    "keeps newer %s changes when an older editor saves or removes the record",
+    (kind) => {
+      const key = {
+        task: "tasks",
+        expense: "expenses",
+        vendor: "vendors",
+        guest: "guests",
+      }[kind] as "tasks" | "expenses" | "vendors" | "guests";
+      const { result, rerender } = renderHook(useWorkspaceController);
+      const original = structuredClone(currentStore.events[0][key][0]);
+      // Exercise the public kind/value boundary; the runtime parser keeps the pair correlated.
+      act(() => result.current.openItem(kind, original));
+      currentStore = structuredClone(currentStore);
+      const record = currentStore.events[0][key][0];
+      if ("title" in record) record.title = "Updated in another tab";
+      else record.name = "Updated in another tab";
+      rerender();
+      const before = structuredClone(currentStore);
+      expect(commit(() => result.current.itemSave(kind, original))).toBe(false);
+      expect(commit(() => result.current.removeItem(kind, original.id))).toBe(
+        false,
+      );
+      expect(currentStore).toEqual(before);
+      expect(result.current.dialog?.type).toBe("item");
+      expect(result.current.toast).toBe("");
+    },
+  );
+
+  it("allows a record save when only an unrelated record changed", () => {
+    const { result, rerender } = renderHook(useWorkspaceController);
+    const task = structuredClone(currentStore.events[0].tasks[0]);
+    act(() => result.current.openItem("task", task));
+    currentStore = structuredClone(currentStore);
+    currentStore.events[0].expenses[0].paid =
+      !currentStore.events[0].expenses[0].paid;
+    rerender();
+    const expenses = structuredClone(currentStore.events[0].expenses);
+    expect(
+      commit(() =>
+        result.current.itemSave("task", { ...task, title: "My edited task" }),
+      ),
+    ).toBe(true);
+    expect(currentStore.events[0].tasks[0].title).toBe("My edited task");
+    expect(currentStore.events[0].expenses).toEqual(expenses);
+  });
+
+  it("rejects an old event callback after external selection changes before a rerender", () => {
+    currentStore.events.push({
+      ...structuredClone(currentStore.events[0]),
+      id: "second-event",
+    });
+    const { result } = renderHook(useWorkspaceController);
+    const updateOriginal = result.current.update;
+    currentStore = { ...currentStore, activeId: "second-event" };
+    const before = structuredClone(currentStore);
+    expect(
+      commit(() =>
+        updateOriginal((event) => ({ ...event, name: "Wrong event" })),
+      ),
+    ).toBe(false);
+    expect(currentStore).toEqual(before);
+  });
+});
+
 describe("dialog extraction integration", () => {
+  it("retains the event draft after an external update, then saves safely after reopening", async () => {
+    const ref = createRef<WorkspaceController>(),
+      user = userEvent.setup();
+    const { rerender } = render(<DialogHarness ref={ref} />);
+    act(() => ref.current?.setModal("edit-event"));
+    const name = screen.getByLabelText("Give your celebration a name");
+    await user.clear(name);
+    await user.type(name, "My event draft");
+    currentStore = structuredClone(currentStore);
+    currentStore.events[0].expenses.push({
+      ...currentStore.events[0].expenses[0],
+      id: "new-deposit",
+      name: "New deposit",
+    });
+    const latest = structuredClone(currentStore);
+    rerender(<DialogHarness ref={ref} />);
+    await user.click(screen.getByRole("button", { name: "Save the details" }));
+    expect(screen.getByRole("alert").textContent).toMatch(/could not be saved/);
+    expect((name as HTMLInputElement).value).toBe("My event draft");
+    expect(currentStore).toEqual(latest);
+    await user.click(screen.getByRole("button", { name: "Close dialog" }));
+    act(() => ref.current?.setModal("edit-event"));
+    await user.clear(screen.getByLabelText("Give your celebration a name"));
+    await user.type(
+      screen.getByLabelText("Give your celebration a name"),
+      "My saved event",
+    );
+    await user.click(screen.getByRole("button", { name: "Save the details" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(currentStore.events[0].name).toBe("My saved event");
+    expect(currentStore.events[0].expenses).toEqual(latest.events[0].expenses);
+  });
+
+  it("resets guest search when switching to another event", async () => {
+    const second = {
+      ...structuredClone(currentStore.events[0]),
+      id: "second-event",
+      name: "Our community party",
+    };
+    second.guests = [
+      { ...second.guests[0], id: "second-guest", name: "Mira Community" },
+    ];
+    currentStore.events.push(second);
+    const user = userEvent.setup();
+    const { rerender } = render(<PlannerApp />);
+    await user.click(screen.getByRole("button", { name: /Guest list/ }));
+    await user.type(
+      await screen.findByRole(
+        "textbox",
+        { name: "Search guests" },
+        { timeout: 5000 },
+      ),
+      "No matching person",
+    );
+    expect(screen.queryByText("Mira Community")).toBeNull();
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Switch event" }),
+      second.id,
+    );
+    rerender(<PlannerApp />);
+    expect(
+      (
+        (await screen.findByRole("textbox", {
+          name: "Search guests",
+        })) as HTMLInputElement
+      ).value,
+    ).toBe("");
+    expect(await screen.findByText("Mira Community")).toBeTruthy();
+  });
+
   it("renders the selected vendor editor and keeps it open after a rejected write", async () => {
     const ref = createRef<WorkspaceController>(),
       user = userEvent.setup();

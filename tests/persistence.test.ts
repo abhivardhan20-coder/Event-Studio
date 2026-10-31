@@ -8,6 +8,9 @@ import {
   type StorageAdapter,
 } from "../lib/persistence";
 import { seedStore } from "../lib/seed";
+import { PlannerConflictError } from "../lib/state";
+import { exportBackup } from "../lib/exports";
+import { LIMITS } from "../lib/model";
 
 function memory(initial?: string) {
   const values = new Map<string, string>(
@@ -30,6 +33,35 @@ function initializedRepository(
 }
 
 describe("browser persistence", () => {
+  it("round-trips a large downloaded backup that pretty printing would make unrestorable", () => {
+    const workspace = largeWorkspace(6800, "large-valid-backup");
+    const raw = exportBackup(workspace);
+    expect(new TextEncoder().encode(raw).byteLength).toBeLessThanOrEqual(
+      LIMITS.backupBytes,
+    );
+    expect(
+      new TextEncoder().encode(JSON.stringify(workspace, null, 2)).byteLength,
+    ).toBeGreaterThan(LIMITS.backupBytes);
+    expect(parseBackup(raw)).toEqual(workspace);
+    expect(() => exportBackup(largeWorkspace(10000, "too-large"))).toThrow(
+      /5 MB backup limit/,
+    );
+  });
+  it("reports a stale-edit conflict without changing or writing the accepted plan", () => {
+    const { storage } = memory();
+    const repo = initializedRepository(() => storage, seedStore);
+    const before = repo.getSnapshot().store;
+    const write = vi.spyOn(storage, "setItem");
+    expect(
+      repo.update(() => {
+        throw new PlannerConflictError();
+      }),
+    ).toBe(false);
+    expect(repo.getSnapshot().store).toBe(before);
+    expect(repo.getSnapshot().persisted).toBe(true);
+    expect(repo.getSnapshot().warning).toMatch(/changed in another tab/);
+    expect(write).not.toHaveBeenCalled();
+  });
   it("keeps snapshot reads pure and hydrates once after subscribing", () => {
     const { storage } = memory();
     const read = vi.spyOn(storage, "getItem");

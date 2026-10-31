@@ -29,7 +29,7 @@ Public visitors can explore and create editable built-in plans. Personalized Gem
 - Manage tasks, expenses, vendor booking stages/checklists, guests, dietary/accessibility notes and RSVPs.
 - Track exact amounts in paise, with paid/unpaid totals, suggested allocations and over-budget warnings.
 - Bookmark ideas, request contextual AI advice and add follow-up tasks. Cancel an in-progress assistant response.
-- Export a text plan, a standards-compliant calendar or JSON backup. Restore backups by merging new events without replacing existing events.
+- Export a text plan, a standards-compliant calendar or compact JSON backup. Storage and downloaded backups use the same 5 MB byte limit. Restore backups by merging new events without replacing existing events.
 - Preserve unreadable saves for recovery; report full or unavailable storage; synchronize valid changes from another tab without discarding unsaved work. Enforce the same 5 MB limit for saved workspaces and backups.
 - Keyboard dialogs with focus trapping/restoration, inert background, associated form labels/hints, status announcements, selected states, skip navigation and reduced motion.
 - Separate view modules; secondary screens load on demand.
@@ -42,7 +42,7 @@ The route in `app/api/plan/route.ts` only wires Worker bindings to the testable 
 
 ## Data and security
 
-Event records remain in this browser on this device. There is no cloud event synchronization or collaboration. Backups can contain personal guest data: keep them somewhere you trust. Storage failures retain usable in-memory plans and display a persistent export reminder. Invalid backup data, duplicate IDs, unknown categories, remote idea images and excessive record counts are rejected.
+Event records remain in this browser on this device. There is no cloud event synchronization or collaboration. Backups can contain personal guest data: keep them somewhere you trust. Storage failures retain usable in-memory plans and display a persistent export reminder. If another tab changes a record while its editor is open, saving or removing the stale record is rejected; close and reopen the form to use the latest version. Event edits also protect newer expenses, tasks, vendors and guest records. Invalid backup data, duplicate IDs, unknown categories, remote idea images and excessive record counts are rejected.
 
 The hosted paid API requires a platform-authenticated user ID and a D1 binding. An atomic SQL counter enforces 25 requests per identity per fixed ten-minute window across Worker instances. D1 stores only a SHA-256 identity hash, the counter and its expiry; no event or guest records. Paid hosted requests fail closed if persistent quota storage is unavailable. Free templates and local development use bounded in-memory counters.
 

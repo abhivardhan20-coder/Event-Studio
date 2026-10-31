@@ -1,5 +1,6 @@
 "use client";
 import { dateLabel } from "@/lib/planner";
+import { exportBackup } from "@/lib/exports";
 import {
   ArrowRight,
   Bookmark,
@@ -51,9 +52,10 @@ export function WorkspaceDialogs({ workspace }: { workspace: ReadyWorkspace }) {
           addTask={addTask}
         />
       )}
-      {(modal === "event" || modal === "edit-event") && (
+      {(dialog?.type === "event" || dialog?.type === "edit-event") && (
         <EventForm
-          event={modal === "edit-event" ? event : undefined}
+          key={dialog.type === "edit-event" ? dialog.event.id : "new-event"}
+          event={dialog.type === "edit-event" ? dialog.event : undefined}
           liveAI={liveAI}
           requiresSignIn={requiresSignIn}
           close={closeModal}
@@ -89,7 +91,7 @@ export function WorkspaceDialogs({ workspace }: { workspace: ReadyWorkspace }) {
           save={saveProfile}
           backup={() =>
             downloadFile(
-              JSON.stringify(store, null, 2),
+              exportBackup(store),
               "gather-backup.json",
               "application/json",
             )
