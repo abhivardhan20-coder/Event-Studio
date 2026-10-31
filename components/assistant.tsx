@@ -16,13 +16,7 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
-import {
-  budgetTotals,
-  todayISO,
-  uid,
-  type Celebration,
-  type Task,
-} from "@/lib/planner";
+import { todayISO, uid, type Celebration, type Task } from "@/lib/planner";
 
 import {
   chatReplySchema,
@@ -30,6 +24,8 @@ import {
   SIGN_IN_PATH,
 } from "@/lib/api-client";
 import { useDialog } from "./ui";
+import { buildChatBody } from "@/lib/chat-request";
+import { MAX_CHAT_MESSAGE_CHARS } from "@/lib/request-limits";
 
 interface Message {
   id: string;
@@ -125,28 +121,11 @@ export function Assistant({
       const response = await fetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "chat",
-          mode: requiresSignIn ? "built-in" : "auto",
-          event: {
-            name: event.name,
-            type: event.type,
-            date: event.date,
-            location: event.location,
-            budget: event.budget,
-            guestCount: event.guestCount,
-            vibe: event.vibe,
-          },
-          spending: budgetTotals(event).recorded,
-          tasks: event.tasks
-            .filter((t) => !t.done)
-            .slice(0, 8)
-            .map((t) => ({ title: t.title, date: t.date })),
-          messages: next
-            .filter((m) => m.id !== "welcome")
-            .slice(-8)
-            .map(({ role, text }) => ({ role, text: text.slice(0, 2000) })),
-        }),
+        body: buildChatBody(
+          event,
+          next.filter((message) => message.id !== "welcome"),
+          requiresSignIn ? "built-in" : "auto",
+        ),
         signal: activeController.signal,
       });
       const data = chatReplySchema.parse(await readApiResponse(response));
@@ -346,7 +325,7 @@ export function Assistant({
           <input
             ref={inputRef}
             value={input}
-            maxLength={2000}
+            maxLength={MAX_CHAT_MESSAGE_CHARS}
             onChange={(e) => setInput(e.target.value)}
             placeholder="A big idea or a little question…"
             aria-label="Message your planning assistant"

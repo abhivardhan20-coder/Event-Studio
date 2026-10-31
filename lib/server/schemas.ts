@@ -1,5 +1,10 @@
 import { z } from "zod";
 import {
+  MAX_CHAT_MESSAGES,
+  MAX_CHAT_MESSAGE_CHARS,
+  MAX_CHAT_TASKS,
+} from "../request-limits.ts";
+import {
   eventInputSchema,
   isoDateSchema,
   categories,
@@ -8,7 +13,7 @@ import {
 
 const messageSchema = z.object({
   role: z.enum(["user", "assistant"]),
-  text: z.string().trim().min(1).max(2000),
+  text: z.string().trim().min(1).max(MAX_CHAT_MESSAGE_CHARS),
 });
 export const requestSchema = z.discriminatedUnion("action", [
   z.object({
@@ -28,9 +33,9 @@ export const requestSchema = z.discriminatedUnion("action", [
           date: isoDateSchema,
         }),
       )
-      .max(8)
+      .max(MAX_CHAT_TASKS)
       .default([]),
-    messages: z.array(messageSchema).min(1).max(8),
+    messages: z.array(messageSchema).min(1).max(MAX_CHAT_MESSAGES),
   }),
 ]);
 export const generatedSchema = z.object({

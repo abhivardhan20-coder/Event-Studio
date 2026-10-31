@@ -3,11 +3,20 @@ import { baseIdeas } from "../templates.ts";
 import { money } from "../format.ts";
 import type { ChatRequest } from "./schemas.ts";
 
+function isBudgetQuestion(question: string) {
+  const subject = question.replace(/\bsave[- ]the[- ]dates?\b/gi, "");
+  return (
+    /\b(?:budget(?:ing)?|sav(?:e|ing|ings)|costs?|spend(?:ing)?|spent|afford(?:able)?|money|funds|balance|expenses?)\b/i.test(
+      subject,
+    ) || /\bhow much\b.{0,60}\b(?:left|remaining|available)\b/i.test(subject)
+  );
+}
+
 export function budgetSnapshot(input: ChatRequest) {
   const lastQuestion =
     input.messages.filter((message) => message.role === "user").at(-1)?.text ??
     "";
-  if (!/budget|sav(e|ing)|cost|spend|afford/i.test(lastQuestion)) return "";
+  if (!isBudgetQuestion(lastQuestion)) return "";
   const available = input.event.budget - input.spending;
   const allocations = budgetAllocations({ ...input.event, expenses: [] });
   return `Your budget: ${money(input.event.budget)}\nRecorded expenses: ${money(input.spending)}\n${available < 0 ? "Over budget" : "Available"}: ${money(Math.abs(available))}\n\nSuggested allocation of your original total budget:\n${allocations.map((row) => `${row.category}: ${money(row.planned)}`).join("\n")}\nThese allocations include amounts already recorded, not additional spending.\n\n`;
@@ -18,7 +27,7 @@ export function builtInGuidance(input: ChatRequest) {
       .filter((message) => message.role === "user")
       .at(-1)
       ?.text.toLowerCase() ?? "";
-  if (/budget|sav(e|ing)|cost|spend|afford/.test(question))
+  if (isBudgetQuestion(question))
     return (
       budgetSnapshot(input) +
       `Start with what matters most to you. Compare itemized quotes, choose seasonal food and flowers, and reuse decor between spaces. Keep a contingency within your total budget. Check recorded spending before making your next booking.\n\nThis is built-in guidance. Sign in for a personalized Gemini conversation when available.`
@@ -29,6 +38,8 @@ export function builtInGuidance(input: ChatRequest) {
     return `Let’s take ${input.event.name} one step at a time.\n\n${
       input.tasks.length
         ? input.tasks
+            .slice()
+            .sort((left, right) => left.date.localeCompare(right.date))
             .slice(0, 3)
             .map(
               (task, index) =>

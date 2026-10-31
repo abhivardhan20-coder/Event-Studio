@@ -1,4 +1,5 @@
-export const MAX_REQUEST_BYTES = 24_000;
+import { MAX_REQUEST_BYTES } from "../request-limits.ts";
+export { MAX_REQUEST_BYTES } from "../request-limits.ts";
 export const REQUEST_READ_TIMEOUT_MS = 10_000;
 export class HttpError extends Error {
   constructor(

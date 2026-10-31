@@ -38,7 +38,7 @@ Public visitors can explore and create editable built-in plans. Personalized Gem
 
 `lib/model.ts` defines the shared runtime and TypeScript contracts. `templates`, `budget`, `format`, `calendar`, `exports` and `state` contain pure domain operations. `persistence.ts` owns browser storage; React consumes pure, stable snapshots through `useSyncExternalStore`. Each planning screen has its own module under `components/views/`. The workspace controller owns typed navigation, exclusive dialogs and save results; components under `components/workspace/` render that state. Event, item and settings forms live in separate modules and keep failed saves open with associated field errors.
 
-The route in `app/api/plan/route.ts` only wires Worker bindings to the testable API service. Request parsing, quotas, provider transport, schemas and deterministic guidance are separate modules in `lib/server/`. Request bodies have byte limits and a ten-second read deadline. Provider requests use bounded token limits, cancellation and timeouts. Gemini's structured-output schema is generated from the same Zod contract that validates its response.
+The route in `app/api/plan/route.ts` only wires Worker bindings to the testable API service. Request parsing, quotas, provider transport, schemas and deterministic guidance are separate modules in `lib/server/`. Request bodies have byte limits and a ten-second read deadline. `lib/chat-request.ts` builds contact-free payloads using the shared request limits, retaining the latest question while trimming older context to fit the UTF-8 byte limit. Provider requests use bounded token limits, cancellation and timeouts. Gemini's structured-output schema is generated from the same Zod contract that validates its response.
 
 ## Data and security
 
@@ -46,7 +46,7 @@ Event records remain in this browser on this device. There is no cloud event syn
 
 The hosted paid API requires a platform-authenticated user ID and a D1 binding. An atomic SQL counter enforces 25 requests per identity per fixed ten-minute window across Worker instances. D1 stores only a SHA-256 identity hash, the counter and its expiry; no event or guest records. Paid hosted requests fail closed if persistent quota storage is unavailable. Free templates and local development use bounded in-memory counters.
 
-Only event details, recorded spending, up to eight outstanding tasks and the last eight chat turns are sent for AI help. Guest records, emails and vendor contacts are excluded. Origin/media checks, streamed body limits, validated dates/money, generic upstream errors, no-store API responses and plain-text React rendering protect the request/response boundary. The hosted site's existing audience is preserved.
+Only event details, recorded spending, up to eight outstanding tasks in due-date order and up to eight recent chat turns are sent for AI help. Older turns and less urgent task context may be omitted to stay within the request byte limit; the latest question is retained. Guest records, emails and vendor contacts are excluded. Origin/media checks, streamed body limits, validated dates/money, generic upstream errors, no-store API responses and plain-text React rendering protect the request/response boundary. The hosted site's existing audience is preserved.
 
 ## Verification
 
