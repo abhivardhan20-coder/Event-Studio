@@ -65,54 +65,10 @@ export const generatedSchema = z.object({
     .min(3)
     .max(8),
 });
-export const planJsonSchema = {
-  type: "object",
-  properties: {
-    summary: { type: "string", minLength: 1, maxLength: 3000 },
-    tasks: {
-      type: "array",
-      minItems: 8,
-      maxItems: 20,
-      items: {
-        type: "object",
-        properties: {
-          title: { type: "string", minLength: 1, maxLength: 200 },
-          category: { type: "string", enum: taskCategories },
-          daysBefore: { type: "integer", minimum: 0, maximum: 365 },
-        },
-        required: ["title", "category", "daysBefore"],
-      },
-    },
-    ideas: {
-      type: "array",
-      minItems: 3,
-      maxItems: 6,
-      items: {
-        type: "object",
-        properties: {
-          title: { type: "string" },
-          description: { type: "string" },
-          tag: { type: "string" },
-        },
-        required: ["title", "description", "tag"],
-      },
-    },
-    vendors: {
-      type: "array",
-      minItems: 3,
-      maxItems: 8,
-      items: {
-        type: "object",
-        properties: {
-          name: { type: "string", minLength: 1, maxLength: 120 },
-          category: { type: "string", enum: categories },
-        },
-        required: ["name", "category"],
-      },
-    },
-  },
-  required: ["summary", "tasks", "ideas", "vendors"],
-};
+// The provider contract and runtime parser share the same field bounds.
+export const planJsonSchema = z.toJSONSchema(generatedSchema, {
+  target: "openapi-3.0",
+});
 
 export type PlannerRequest = z.infer<typeof requestSchema>;
 export type ChatRequest = Extract<PlannerRequest, { action: "chat" }>;

@@ -51,7 +51,7 @@ export function Assistant({
   liveAI: boolean;
   requiresSignIn?: boolean;
   close: () => void;
-  addTask: (task: Task) => void;
+  addTask: (task: Task) => boolean;
 }) {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -63,6 +63,7 @@ export function Assistant({
   const [input, setInput] = useState(""),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  const [taskError, setTaskError] = useState("");
   const scroll = useRef<HTMLDivElement>(null),
     controller = useRef<AbortController | null>(null),
     started = useRef(false),
@@ -80,7 +81,12 @@ export function Assistant({
     };
   }, []);
   useEffect(() => {
-    scroll.current?.scrollIntoView({ behavior: "smooth" });
+    const reduceMotion =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    scroll.current?.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+    });
   }, [messages, busy]);
   const sendPrompt = useEffectEvent((text: string) => {
     void send(text);
@@ -239,13 +245,20 @@ export function Assistant({
                   className="chat-save"
                   disabled={message.actionAdded}
                   onClick={() => {
-                    addTask({
+                    const added = addTask({
                       id: uid(),
                       title: `Follow up: ${messages[messages.indexOf(message) - 1]?.text.slice(0, 130) ?? "Gather’s suggestion"}`,
                       category: "Other",
                       date: todayISO(),
                       done: false,
                     });
+                    if (!added) {
+                      setTaskError(
+                        "The task could not be added. Check the timeline limit or export a backup before trying again.",
+                      );
+                      return;
+                    }
+                    setTaskError("");
                     setMessages((current) =>
                       current.map((m) =>
                         m.id === message.id ? { ...m, actionAdded: true } : m,
@@ -266,6 +279,11 @@ export function Assistant({
             </div>
           </div>
         ))}
+        {taskError && (
+          <p className="form-error" role="alert">
+            {taskError}
+          </p>
+        )}
         {busy && (
           <div className="thinking" role="status">
             <Sparkles size={16} />

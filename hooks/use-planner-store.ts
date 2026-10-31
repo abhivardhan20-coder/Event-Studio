@@ -14,8 +14,17 @@ const repository = createPlannerRepository(
 function subscribe(listener: () => void) {
   const unsubscribe = repository.subscribe(listener);
   const onStorage = (event: StorageEvent) => {
-    if (event.storageArea === window.localStorage && event.key === STORAGE_KEY)
-      repository.acceptExternal(event.newValue);
+    let storage: Storage;
+    try {
+      storage = window.localStorage;
+    } catch {
+      return;
+    }
+    if (
+      event.storageArea === storage &&
+      (event.key === STORAGE_KEY || event.key === null)
+    )
+      repository.acceptExternal(event.key === null ? null : event.newValue);
   };
   window.addEventListener("storage", onStorage);
   return () => {

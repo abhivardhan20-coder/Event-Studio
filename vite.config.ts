@@ -46,6 +46,7 @@ export default defineConfig(async ({ command }) => {
   process.env.WRANGLER_WRITE_LOGS ??= "false";
   process.env.WRANGLER_LOG_PATH ??= ".wrangler/logs";
   process.env.WRANGLER_REGISTRY_PATH ??= ".wrangler/dev-registry";
+  process.env.CLOUDFLARE_DEV_REGISTRY_PATH ??= ".wrangler/dev-registry";
   process.env.MINIFLARE_REGISTRY_PATH ??= ".wrangler/registry";
 
   // Wrangler snapshots its log path while the Cloudflare plugin is imported.

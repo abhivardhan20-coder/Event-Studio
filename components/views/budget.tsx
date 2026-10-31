@@ -156,7 +156,7 @@ export function BudgetView({
                     <td>
                       <button
                         className={`status-pill ${expense.paid ? "green" : "peach"}`}
-                        aria-label={`Mark ${expense.name} as ${expense.paid ? "unpaid" : "paid"}`}
+                        aria-label={`${expense.paid ? "Paid" : "Unpaid"}: ${expense.name}. Mark as ${expense.paid ? "unpaid" : "paid"}`}
                         aria-pressed={expense.paid}
                         onClick={() =>
                           update((e) => ({

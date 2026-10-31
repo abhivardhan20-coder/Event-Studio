@@ -38,10 +38,10 @@ export const isoDateSchema = z
     );
   }, "Choose a valid date.");
 export const amountSchema = z
-  .number()
+  .number({ error: "Enter a valid amount." })
   .finite()
-  .min(0)
-  .max(100_000_000)
+  .min(0, "Enter zero or a positive amount.")
+  .max(100_000_000, "Use an amount of ₹10,00,00,000 or less.")
   .refine(
     (value) => Math.abs(value * 100 - Math.round(value * 100)) < 0.00001,
     "Use no more than two decimal places.",
@@ -51,25 +51,29 @@ export const eventInputSchema = z.object({
   name: z.string().trim().min(2, "Give your event a name.").max(100),
   type: z.enum(eventTypes),
   date: isoDateSchema,
-  location: z.string().trim().min(2).max(120),
+  location: z.string().trim().min(2, "Enter a city or venue.").max(120),
   budget: amountSchema.refine(
     (value) => value >= 100,
     "Your budget must be at least ₹100.",
   ),
-  guestCount: z.number().int().min(1).max(100_000),
+  guestCount: z
+    .number({ error: "Enter the number of guests." })
+    .int("Use a whole number of guests.")
+    .min(1, "Invite at least one guest.")
+    .max(100_000, "Use 1,00,000 guests or fewer."),
   vibe: z.string().trim().max(300),
 });
 export type EventInput = z.infer<typeof eventInputSchema>;
 export const taskSchema = z.object({
   id: idSchema,
-  title: z.string().trim().min(1).max(200),
+  title: z.string().trim().min(1, "Give your task a title.").max(200),
   category: z.enum(taskCategories),
   date: eventInputSchema.shape.date,
   done: z.boolean(),
 });
 export const expenseSchema = z.object({
   id: idSchema,
-  name: z.string().trim().min(1).max(120),
+  name: z.string().trim().min(1, "Give your expense a name.").max(120),
   category: z.enum(categories),
   amount: amountSchema,
   paid: z.boolean(),
@@ -143,12 +147,17 @@ export const eventSchema = eventInputSchema
     }
   });
 export type Celebration = z.infer<typeof eventSchema>;
+export const profileSchema = z
+  .string()
+  .trim()
+  .min(1, "Enter your name.")
+  .max(40, "Use 40 characters or fewer.");
 export const storeSchema = z
   .object({
     version: z.literal(1),
     events: z.array(eventSchema).min(1).max(LIMITS.events),
     activeId: idSchema,
-    profile: z.string().trim().min(1).max(40),
+    profile: profileSchema,
   })
   .superRefine((store, context) => {
     if (

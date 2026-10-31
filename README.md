@@ -4,7 +4,7 @@ An event planning workspace for weddings, birthdays and community celebrations. 
 
 ## Run locally
 
-Requires Node.js 22.13+ (Node 24 LTS recommended).
+Requires Node.js 24 or newer.
 
 ```powershell
 npm ci --legacy-peer-deps
@@ -30,15 +30,15 @@ Public visitors can explore and create editable built-in plans. Personalized Gem
 - Track exact amounts in paise, with paid/unpaid totals, suggested allocations and over-budget warnings.
 - Bookmark ideas, request contextual AI advice and add follow-up tasks. Cancel an in-progress assistant response.
 - Export a text plan, a standards-compliant calendar or JSON backup. Restore backups by merging new events without replacing existing events.
-- Preserve unreadable saves for recovery; report full or unavailable storage; synchronize valid changes from another tab.
+- Preserve unreadable saves for recovery; report full or unavailable storage; synchronize valid changes from another tab without discarding unsaved work. Enforce the same 5 MB limit for saved workspaces and backups.
 - Keyboard dialogs with focus trapping/restoration, inert background, associated form labels/hints, status announcements, selected states, skip navigation and reduced motion.
 - Separate view modules; secondary screens load on demand.
 
 ## Architecture
 
-`lib/model.ts` defines the shared runtime and TypeScript contracts. `templates`, `budget`, `format`, `calendar`, `exports` and `state` contain pure domain operations. `persistence.ts` owns browser storage; React consumes stable snapshots through `useSyncExternalStore`. Each planning screen has its own module under `components/views/`.
+`lib/model.ts` defines the shared runtime and TypeScript contracts. `templates`, `budget`, `format`, `calendar`, `exports` and `state` contain pure domain operations. `persistence.ts` owns browser storage; React consumes pure, stable snapshots through `useSyncExternalStore`. Each planning screen has its own module under `components/views/`. The workspace controller owns typed navigation, exclusive dialogs and save results; components under `components/workspace/` render that state. Event, item and settings forms live in separate modules and keep failed saves open with associated field errors.
 
-The route in `app/api/plan/route.ts` only wires Worker bindings to the testable API service. Request parsing, quotas, provider transport, schemas and deterministic guidance are separate modules in `lib/server/`. Provider requests use bounded token limits, cancellation and timeouts. Generated plans must pass runtime validation before reaching the UI.
+The route in `app/api/plan/route.ts` only wires Worker bindings to the testable API service. Request parsing, quotas, provider transport, schemas and deterministic guidance are separate modules in `lib/server/`. Request bodies have byte limits and a ten-second read deadline. Provider requests use bounded token limits, cancellation and timeouts. Gemini's structured-output schema is generated from the same Zod contract that validates its response.
 
 ## Data and security
 
@@ -58,7 +58,9 @@ npm run build
 npm audit --omit=dev
 ```
 
-`test:api` expects a local server and always exercises explicitly selected built-in plans for all three event types, validation, body size limits, origin rejection and contextual chat. `TEST_BASE_URL` overrides its default URL. It does not spend Gemini quota. The Vitest suite covers domain logic, storage failure/recovery, the API, provider failures, real SQLite quota SQL, component interactions and the full expense/RSVP workflow. Axe checks every planning screen and key dialogs in jsdom; layout-dependent contrast checks cannot run in jsdom.
+`test:api` expects a local server and always exercises explicitly selected built-in plans for all three event types, validation, body size limits, origin rejection and contextual chat. `TEST_BASE_URL` overrides its default URL. It does not spend Gemini quota. The Vitest suite covers domain logic, storage failure/recovery/conflicts, the API, body-read deadlines, provider failures, real SQLite quota SQL, component interactions, rejected saves, stale editors, modal/mobile focus and the full expense/RSVP workflow. Axe checks every planning screen and key dialogs in jsdom; layout-dependent contrast is also checked separately in the real browser.
+
+`.github/workflows/quality.yml` runs type checking, zero-warning lint, coverage, production dependency auditing, the production build and a built-Worker API smoke test on pushes to `main` and pull requests. It uses read-only repository permissions and needs no live AI credential.
 
 Coverage reports are written to ignored `coverage/`. The maintained Sites integration and its template components are retained. `npm start` previews the production Worker locally using `.wrangler/state`.
 

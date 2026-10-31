@@ -141,7 +141,12 @@ describe("planning forms", () => {
     const save = vi.fn(),
       user = userEvent.setup();
     render(
-      <ItemForm kind="guest" close={() => {}} save={save} remove={() => {}} />,
+      <ItemForm
+        kind="guest"
+        close={() => {}}
+        save={save}
+        remove={() => true}
+      />,
     );
     const name = screen.getByPlaceholderText("e.g. Ananya Sharma");
     await user.type(name, "   ");
@@ -151,7 +156,7 @@ describe("planning forms", () => {
   });
   it("provides sign-in and explicit built-in planning for anonymous visitors", async () => {
     const { container } = render(
-      <EventForm liveAI requiresSignIn close={() => {}} save={() => {}} />,
+      <EventForm liveAI requiresSignIn close={() => {}} save={() => true} />,
     );
     expect(
       screen
@@ -170,7 +175,7 @@ describe("planning forms", () => {
         profile="Aanya"
         liveAI
         close={() => {}}
-        save={() => {}}
+        save={() => true}
         backup={() => {}}
         recovery={() => {}}
         restore={restore}
@@ -215,7 +220,7 @@ describe("assistant requests", () => {
           prompt="What is next?"
           liveAI
           close={() => {}}
-          addTask={() => {}}
+          addTask={() => true}
         />
       </StrictMode>,
     );
@@ -241,7 +246,7 @@ describe("assistant requests", () => {
         liveAI
         requiresSignIn
         close={() => {}}
-        addTask={() => {}}
+        addTask={() => true}
       />,
     );
     await user.type(
@@ -277,7 +282,7 @@ describe("assistant requests", () => {
         prompt=""
         liveAI
         close={() => {}}
-        addTask={() => {}}
+        addTask={() => true}
       />,
     );
     await user.click(
@@ -297,7 +302,7 @@ describe("assistant requests", () => {
   });
 });
 describe("planning screens", () => {
-  const noop = () => {};
+  const noop = () => true;
   it.each([
     "Overview",
     "Budget",

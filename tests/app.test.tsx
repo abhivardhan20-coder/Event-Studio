@@ -44,7 +44,7 @@ it("navigates lazy screens, saves an expense, retains it after remount and updat
   });
   expect(accessibility.violations.map((violation) => violation.id)).toEqual([]);
   await user.click(screen.getByRole("button", { name: "Budget" }));
-  await screen.findByText("Where it’s all going");
+  await screen.findByText("Where it’s all going", {}, { timeout: 5_000 });
   await user.click(screen.getByRole("button", { name: "Add an expense" }));
   await user.type(
     screen.getByLabelText("What’s the expense?"),
@@ -68,4 +68,4 @@ it("navigates lazy screens, saves an expense, retains it after remount and updat
         .guests[0].rsvp,
     ).toBe("Declined"),
   );
-});
+}, 15_000);

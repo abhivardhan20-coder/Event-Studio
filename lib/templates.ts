@@ -120,7 +120,7 @@ export function baseIdeas(input: EventInput): Idea[] {
     saved: false,
   }));
 }
-export function createPlan(input: EventInput): Celebration {
+export function createPlan(input: EventInput, today = todayISO()): Celebration {
   const vendorRoles: [string, Vendor["category"]][] =
     input.type === "Wedding"
       ? [
@@ -151,8 +151,8 @@ export function createPlan(input: EventInput): Celebration {
       title,
       category,
       date:
-        dateOffset(input.date, -days) < todayISO()
-          ? todayISO()
+        dateOffset(input.date, -days) < today
+          ? today
           : dateOffset(input.date, -days),
       done: false,
     })),

@@ -1,6 +1,36 @@
 :root {
   --terracotta: #98583f;
 }
+.nav-count {
+  color: #545d47;
+}
+.avatar {
+  color: #5e503b;
+}
+.due-tag.due-today {
+  color: #7d4e30;
+}
+.guest-avatar {
+  color: #635037;
+}
+.rsvp-select.declined {
+  color: #73503e;
+}
+.thoughtful-banner > div > p,
+.thoughtful-banner > button {
+  color: #5e654e;
+}
+.table-scroll {
+  position: relative;
+}
+.mobile-menu-close {
+  display: none;
+}
+.sidebar-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .form-fields {
   border: 0;
   margin: 0;
@@ -171,7 +201,51 @@ textarea:focus-visible,
 .form-error {
   color: #803e28;
 }
+.field .field-error {
+  color: #803e28;
+  font-weight: 500;
+}
+.field [aria-invalid="true"] {
+  border-color: #984a30;
+}
+.event-title h2,
+.sidebar-footer > div,
+.assistant-context strong {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
 @media (max-width: 900px) {
+  .mobile-menu-close {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+  }
+  .sidebar-brand-row .brand {
+    font-size: 28px;
+    min-width: 0;
+    flex: 1;
+    padding-left: 0;
+  }
+  .event-switch select,
+  .filter-select,
+  .rsvp-select,
+  .vendor-status-label select,
+  .search-box input {
+    min-height: 44px;
+    font-size: 16px;
+  }
+  .bookmark-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .task-checkbox {
+    min-width: 32px;
+    min-height: 32px;
+  }
+  .vendor-checklist label {
+    min-height: 44px;
+  }
   .field input,
   .field select,
   .field textarea,
@@ -197,6 +271,11 @@ textarea:focus-visible,
   }
   .event-switch select {
     max-width: 180px;
+  }
+}
+@media (max-width: 600px) {
+  .hero-caption {
+    display: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {

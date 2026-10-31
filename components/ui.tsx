@@ -1,95 +1,16 @@
 "use client";
 import {
   cloneElement,
-  useEffect,
-  useEffectEvent,
   useId,
   useRef,
   type ReactElement,
   type ReactNode,
-  type RefObject,
+  type AriaAttributes,
 } from "react";
 import { X, ArrowUpRight, Plus } from "lucide-react";
 
-export function useDialog(
-  ref: RefObject<HTMLElement | null>,
-  close: () => void,
-) {
-  const dismiss = useEffectEvent(close);
-  useEffect(() => {
-    const dialog = ref.current;
-    if (!dialog) return;
-    const previous =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    const oldOverflow = document.body.style.overflow;
-    const background = Array.from(
-      document.querySelectorAll<HTMLElement>(
-        ".sidebar, .main-shell, .assistant-fab",
-      ),
-    );
-    const inert = background.map((element) => element.inert ?? false);
-    background.forEach((element) => {
-      element.inert = true;
-    });
-    document.body.style.overflow = "hidden";
-    const focusable = () =>
-      Array.from(
-        dialog.querySelectorAll<HTMLElement>(
-          'button,input,select,textarea,a[href],[tabindex="0"]',
-        ),
-      ).filter(
-        (element) =>
-          !element.matches(":disabled,[hidden]") &&
-          !element.closest("[hidden],[inert]"),
-      );
-    (
-      dialog.querySelector<HTMLElement>(
-        "input:not(:disabled),textarea:not(:disabled)",
-      ) ??
-      focusable()[0] ??
-      dialog
-    ).focus();
-    const listener = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        dismiss();
-      }
-      if (event.key !== "Tab") return;
-      const elements = focusable();
-      const first = elements[0],
-        last = elements.at(-1);
-      if (!first) {
-        event.preventDefault();
-        dialog.focus();
-      } else if (
-        event.shiftKey &&
-        (document.activeElement === first ||
-          !dialog.contains(document.activeElement))
-      ) {
-        event.preventDefault();
-        last?.focus();
-      } else if (
-        !event.shiftKey &&
-        (document.activeElement === last ||
-          !dialog.contains(document.activeElement))
-      ) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener("keydown", listener);
-    return () => {
-      document.removeEventListener("keydown", listener);
-      document.body.style.overflow = oldOverflow;
-      background.forEach((element, index) => {
-        element.inert = inert[index];
-      });
-      if (previous?.isConnected) previous.focus();
-    };
-  }, [ref]);
-}
+import { useDialog } from "@/hooks/use-dialog";
+export { useDialog } from "@/hooks/use-dialog";
 
 export function Modal({
   title,
@@ -200,25 +121,42 @@ export function Field({
   label,
   children,
   hint,
+  error,
 }: {
   label: string;
-  children: ReactElement<{ id?: string; "aria-describedby"?: string }>;
+  children: ReactElement<{
+    id?: string;
+    "aria-describedby"?: string;
+    "aria-invalid"?: AriaAttributes["aria-invalid"];
+  }>;
   hint?: string;
+  error?: string;
 }) {
   const generatedId = useId();
   const id = children.props.id ?? generatedId;
   const hintId = `${id}-hint`;
+  const errorId = `${id}-error`;
   return (
     <div className="field">
       <label htmlFor={id}>{label}</label>
       {cloneElement(children, {
         id,
+        "aria-invalid": error ? true : children.props["aria-invalid"],
         "aria-describedby":
-          [children.props["aria-describedby"], hint ? hintId : undefined]
+          [
+            children.props["aria-describedby"],
+            hint ? hintId : undefined,
+            error ? errorId : undefined,
+          ]
             .filter(Boolean)
             .join(" ") || undefined,
       })}
       {hint && <small id={hintId}>{hint}</small>}
+      {error && (
+        <small id={errorId} className="field-error">
+          {error}
+        </small>
+      )}
     </div>
   );
 }
