@@ -49,7 +49,7 @@ export function createPlannerRepository(
   let initialized = false;
   let writable = true;
   let conflicted = false;
-  let externalRecovery: string | null = null;
+  let recoveryRaw: string | null = null;
   const listeners = new Set<() => void>();
   const conflictWarning =
     "Another tab changed your saved plans while this workspace had unsaved changes. Both versions were kept. Export this workspace and download the browser recovery copy in Settings before reloading.";
@@ -84,6 +84,9 @@ export function createPlannerRepository(
         try {
           snapshot = { store: parseBackup(raw), persisted: true, warning: "" };
         } catch {
+          // Keep the newest original available even if the disk recovery
+          // slot cannot be updated or storage access is later revoked.
+          recoveryRaw = raw;
           try {
             storage.setItem(RECOVERY_KEY, raw);
           } catch {
@@ -180,7 +183,7 @@ export function createPlannerRepository(
         // A successful save elsewhere must not erase this tab's pending work.
         // Keep the remote JSON separately so the Settings recovery download
         // can preserve it too; prevent a later edit from overwriting it.
-        externalRecovery = raw;
+        recoveryRaw = raw;
         conflicted = true;
         snapshot = { ...snapshot, warning: conflictWarning };
       } else {
@@ -188,7 +191,7 @@ export function createPlannerRepository(
       }
       emit();
     } catch {
-      externalRecovery = raw;
+      recoveryRaw = raw;
       snapshot = {
         ...getSnapshot(),
         persisted: false,
@@ -228,7 +231,7 @@ export function createPlannerRepository(
     },
     recovery() {
       return (
-        externalRecovery ??
+        recoveryRaw ??
         storageFactory().getItem(RECOVERY_KEY) ??
         storageFactory().getItem(STORAGE_KEY)
       );

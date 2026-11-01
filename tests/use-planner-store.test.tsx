@@ -62,3 +62,53 @@ it("ignores unrelated storage and detached storage events", async () => {
   expect(result.current.store).toBe(current);
   expect(result.current.warning).toBe("");
 });
+
+it("reads the newest stored workspace when an older notification arrives", async () => {
+  vi.resetModules();
+  const { usePlannerStore } = await import("../hooks/use-planner-store");
+  const { result } = renderHook(() => usePlannerStore());
+  await waitFor(() => expect(result.current.store).not.toBeNull());
+  const oldValue = JSON.stringify({
+    ...result.current.store,
+    profile: "Older remote name",
+  });
+  const latest = { ...result.current.store, profile: "Latest accepted name" };
+  act(() => {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(latest));
+    window.dispatchEvent(storageEvent(STORAGE_KEY, oldValue));
+  });
+  expect(result.current.store?.profile).toBe("Latest accepted name");
+  expect(result.current.persisted).toBe(true);
+  expect(result.current.warning).toBe("");
+});
+
+it("does not treat an old clear notification as a new clear after another tab has saved", async () => {
+  vi.resetModules();
+  const { usePlannerStore } = await import("../hooks/use-planner-store");
+  const { result } = renderHook(() => usePlannerStore());
+  await waitFor(() => expect(result.current.store).not.toBeNull());
+  act(() => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ ...result.current.store, profile: "Saved after clear" }),
+    );
+    window.dispatchEvent(storageEvent(null, null));
+  });
+  expect(result.current.store?.profile).toBe("Saved after clear");
+  expect(result.current.persisted).toBe(true);
+  expect(result.current.warning).toBe("");
+});
+
+it("keeps the open workspace when reading storage becomes unavailable", async () => {
+  vi.resetModules();
+  const { usePlannerStore } = await import("../hooks/use-planner-store");
+  const { result } = renderHook(() => usePlannerStore());
+  await waitFor(() => expect(result.current.store).not.toBeNull());
+  const before = result.current.store;
+  vi.spyOn(window.localStorage, "getItem").mockImplementation(() => {
+    throw new Error("Storage denied");
+  });
+  act(() => window.dispatchEvent(storageEvent(STORAGE_KEY, "invalid")));
+  expect(result.current.store).toBe(before);
+  expect(result.current.warning).toBe("");
+});

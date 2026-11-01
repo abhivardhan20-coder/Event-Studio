@@ -30,7 +30,7 @@ Public visitors can explore and create editable built-in plans. Personalized Gem
 - Track exact amounts in paise, with paid/unpaid totals, suggested allocations and over-budget warnings.
 - Bookmark ideas, request contextual AI advice and add follow-up tasks. Cancel an in-progress assistant response.
 - Export a text plan, a standards-compliant calendar or compact JSON backup. Storage and downloaded backups use the same 5 MB byte limit. Restore backups by merging new events without replacing existing events.
-- Preserve unreadable saves for recovery; report full or unavailable storage; synchronize valid changes from another tab without discarding unsaved work. Enforce the same 5 MB limit for saved workspaces and backups.
+- Preserve the newest unreadable save for recovery even when storage is full or later unavailable; synchronize from the current stored value when delayed cross-tab notifications arrive. Preserve unsaved work and enforce the same 5 MB limit for saved workspaces and backups.
 - Keyboard dialogs with focus trapping/restoration, inert background, associated form labels/hints, status announcements, selected states, skip navigation and reduced motion.
 - Separate view modules; secondary screens load on demand.
 

@@ -14,17 +14,19 @@ const repository = createPlannerRepository(
 function subscribe(listener: () => void) {
   const unsubscribe = repository.subscribe(listener);
   const onStorage = (event: StorageEvent) => {
-    let storage: Storage;
     try {
-      storage = window.localStorage;
+      const storage = window.localStorage;
+      if (
+        event.storageArea === storage &&
+        (event.key === STORAGE_KEY || event.key === null)
+      )
+        // Notifications can be queued behind newer writes, including saves
+        // made after a clear. Synchronize from the value that exists now.
+        repository.acceptExternal(storage.getItem(STORAGE_KEY));
     } catch {
+      // Losing storage access must not replace or interrupt the open plan.
       return;
     }
-    if (
-      event.storageArea === storage &&
-      (event.key === STORAGE_KEY || event.key === null)
-    )
-      repository.acceptExternal(event.key === null ? null : event.newValue);
   };
   window.addEventListener("storage", onStorage);
   return () => {

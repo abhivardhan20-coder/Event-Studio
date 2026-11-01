@@ -116,6 +116,28 @@ describe("browser persistence", () => {
     ).toBe(true);
     expect(repo.getSnapshot().store?.profile).toBe("Still usable");
   });
+  it("offers the latest corrupt save even if an older recovery copy exists and storage is full", () => {
+    const { storage } = memory("latest broken save");
+    storage.setItem(RECOVERY_KEY, "older recovery copy");
+    storage.setItem = () => {
+      throw new Error("Quota exceeded");
+    };
+    const repo = initializedRepository(() => storage, seedStore);
+    expect(repo.recovery()).toBe("latest broken save");
+    expect(storage.getItem(STORAGE_KEY)).toBe("latest broken save");
+    expect(storage.getItem(RECOVERY_KEY)).toBe("older recovery copy");
+    expect(repo.getSnapshot().persisted).toBe(false);
+  });
+  it("keeps the corrupt save downloadable after storage access is later denied", () => {
+    const { storage } = memory("latest broken save");
+    let available = true;
+    const repo = initializedRepository(() => {
+      if (!available) throw new Error("Access denied");
+      return storage;
+    }, seedStore);
+    available = false;
+    expect(repo.recovery()).toBe("latest broken save");
+  });
   it("supports denied storage and clearly reports in-memory changes", () => {
     const repo = initializedRepository(() => {
       throw new Error("Blocked");
