@@ -27,7 +27,7 @@ Public visitors can explore and create editable built-in plans. Personalized Gem
 - Generate and display a personalized summary, timeline, ideas and vendor role placeholders.
 - Shift unfinished tasks when an event date changes; keep completed history intact.
 - Manage tasks, expenses, vendor booking stages/checklists, guests, dietary/accessibility notes and RSVPs.
-- Track exact amounts in paise, with paid/unpaid totals, suggested allocations and over-budget warnings.
+- Track exact amounts in paise, with paid/unpaid totals, suggested allocations and over-budget warnings. The assistant accepts the full supported expense ledger, rejects fractional-paise totals and uses integer-paise balance calculations.
 - Bookmark ideas, request contextual AI advice and add follow-up tasks. Cancel an in-progress assistant response.
 - Export a text plan, a standards-compliant calendar or compact JSON backup. Storage and downloaded backups use the same 5 MB byte limit. Restore backups by merging new events without replacing existing events.
 - Preserve the newest unreadable save for recovery even when storage is full or later unavailable; synchronize from the current stored value when delayed cross-tab notifications arrive. Preserve unsaved work and enforce the same 5 MB limit for saved workspaces and backups.

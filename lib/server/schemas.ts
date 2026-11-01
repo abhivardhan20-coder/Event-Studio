@@ -9,6 +9,7 @@ import {
   isoDateSchema,
   categories,
   taskCategories,
+  recordedSpendingSchema,
 } from "../model.ts";
 
 const messageSchema = z.object({
@@ -25,7 +26,7 @@ export const requestSchema = z.discriminatedUnion("action", [
     action: z.literal("chat"),
     mode: z.enum(["auto", "built-in"]).default("auto"),
     event: eventInputSchema,
-    spending: z.number().finite().min(0).max(1e10).default(0),
+    spending: recordedSpendingSchema.default(0),
     tasks: z
       .array(
         z.object({

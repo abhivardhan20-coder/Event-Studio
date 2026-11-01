@@ -1,6 +1,14 @@
 # Gather quality review
 
-Verified locally on 1 November 2026, including a final storage review after version 6. Earlier browser and live-provider checks are dated below. This report records measured checks and their limits; the external evaluator determines its own score.
+Verified locally on 1 November 2026, including storage and currency-contract reviews. Earlier browser and live-provider checks are dated below. This report records measured checks and their limits; the external evaluator determines its own score.
+
+## Currency-contract review
+
+- Derive the assistant's spending limit from the maximum expense amount and record count. A valid 500-record ledger can exceed the assistant's former independent cap; that ledger now remains usable in budget conversations.
+- Share currency validation between event amounts and recorded-spending requests. Reject fractional-paise totals before consuming quota, while accepting representational floating-point residue.
+- Calculate the assistant's available balance in integer paise so tiny floating-point differences cannot produce a misleading zero-rupee over-budget message.
+- Add six contract tests covering complete ledgers at the maximum, the final paise, invalid precision, excessive totals and floating-point residue. Five cases reproduced failures in the previous implementation; all six now pass. The complete suite passes 186 tests across 17 files.
+- Verify the same four currency boundaries against the built Worker. A browser conversation returns the sample ledger's exact ₹4,76,000 available balance with no console errors.
 
 ## Final storage review
 
@@ -27,20 +35,20 @@ Verified locally on 1 November 2026, including a final storage review after vers
 
 ## Changes against the evaluation categories
 
-| Category          | Improvements                                                                                                                                                                                                                                                                                     |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Code quality      | Separate the workspace controller, navigation, header, dialogs and individual forms. Use typed, exclusive dialog state and correlated item types. Generate Gemini's output schema from its Zod parser. Keep storage reads free of render-time side effects and reject invalid writes atomically. |
-| Security          | Upgrade Zod and Cloudflare tooling to address current advisories. Retain server-only Gemini credentials, hosted identity and atomic D1 quotas. Bound body bytes and read duration, handle stalled cancellation, validate provider output and preserve browser security headers.                  |
-| Efficiency        | Retain lazy-loaded screens, bounded records/history/tokens and integer-paise calculations. Snapshot the request's current day once. Cancel abandoned generation and release request readers/listeners/timers.                                                                                    |
-| Testing           | Expand the suite from 85 to 180 tests across 16 files. Cover rejected writes, storage conflicts/limits, stale editors, request deadlines, modal isolation, mobile navigation, provider contracts and real SQLite quota statements. Add a GitHub Actions workflow and strengthen coverage gates.  |
-| Accessibility     | Associate validation errors with controls and focus the first invalid field. Trap focus in stacked dialogs and the mobile drawer, restore triggers, isolate background content and preserve reduced motion. Fix measured text contrast, visible-label/name mismatches and mobile table overflow. |
-| Problem alignment | Keep wedding, birthday and community workflows, personalized summaries, budgets, editable timelines, vendor checklists, RSVPs, ideas, backups and exports. Clearly distinguish Gemini personalization from editable built-in plans.                                                              |
+| Category          | Improvements                                                                                                                                                                                                                                                                                                        |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Code quality      | Separate the workspace controller, navigation, header, dialogs and individual forms. Use typed, exclusive dialog state and correlated item types. Generate Gemini's output schema from its Zod parser. Keep storage reads free of render-time side effects and reject invalid writes atomically.                    |
+| Security          | Upgrade Zod and Cloudflare tooling to address current advisories. Retain server-only Gemini credentials, hosted identity and atomic D1 quotas. Bound body bytes and read duration, handle stalled cancellation, validate provider output and preserve browser security headers.                                     |
+| Efficiency        | Retain lazy-loaded screens, bounded records/history/tokens and integer-paise calculations. Snapshot the request's current day once. Cancel abandoned generation and release request readers/listeners/timers.                                                                                                       |
+| Testing           | Expand the suite from 85 to 186 tests across 17 files. Cover rejected writes, storage conflicts/limits, stale editors, request deadlines, currency contracts, modal isolation, mobile navigation, provider contracts and real SQLite quota statements. Add a GitHub Actions workflow and strengthen coverage gates. |
+| Accessibility     | Associate validation errors with controls and focus the first invalid field. Trap focus in stacked dialogs and the mobile drawer, restore triggers, isolate background content and preserve reduced motion. Fix measured text contrast, visible-label/name mismatches and mobile table overflow.                    |
+| Problem alignment | Keep wedding, birthday and community workflows, personalized summaries, budgets, editable timelines, vendor checklists, RSVPs, ideas, backups and exports. Clearly distinguish Gemini personalization from editable built-in plans.                                                                                 |
 
 ## Verification evidence
 
 - TypeScript and ESLint pass with zero lint warnings. The production Worker builds successfully.
-- **180 tests pass across 16 files.** The suite verifies lazy navigation, exact amounts, persistence, RSVP updates, concurrent editors, queued storage events, recovery under storage failures, event-specific search, large backups, question interpretation, task priority and bounded multilingual requests.
-- Application coverage: **87.69% lines, 85.56% statements, 78.93% branches and 73.20% functions**. This includes the forms, workspace components, hooks and request builder. The planning API service retains 100% line/statement/function coverage and 95.58% branch coverage.
+- **186 tests pass across 17 files.** The suite verifies lazy navigation, exact amounts, ledger/API currency limits, persistence, RSVP updates, concurrent editors, queued storage events, recovery under storage failures, event-specific search, large backups, question interpretation, task priority and bounded multilingual requests.
+- Application coverage: **87.71% lines, 85.58% statements, 78.93% branches and 73.20% functions**. This includes the forms, workspace components, hooks and request builder. The planning API service retains 100% line/statement/function coverage and 95.58% branch coverage.
 - Coverage gates now require 85% lines, 84% statements, 76% branches and 70% functions. The API has separate 100% line/statement/function and 95% branch gates. These percentages measure exercised code, not evaluation scores.
 - Browser axe audits on 31 October of all six complete desktop screens report **zero violations**, including contrast and accessible-name checks. Browser auditing found and prompted fixes to the inspiration banner and the profile/payment buttons. The final storage changes do not alter their markup or styles.
 - Mobile verification at a 390-pixel viewport checks the drawer's initial focus, Escape dismissal, focus restoration, destination heading focus and inert background. A blank expense amount focuses its associated error; a valid paid expense saves ₹1,234.56 and survives reload. The budget table remains horizontally scrollable within the page. A decorative hero caption is hidden on narrow screens to keep the call to action clear.

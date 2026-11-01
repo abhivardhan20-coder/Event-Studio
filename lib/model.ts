@@ -19,6 +19,7 @@ export const taskCategories = [
   "Celebration",
 ] as const;
 export const LIMITS = {
+  amount: 100_000_000,
   events: 100,
   tasks: 300,
   expenses: 500,
@@ -37,15 +38,25 @@ export const isoDateSchema = z
       new Date(timestamp).toISOString().slice(0, 10) === value
     );
   }, "Choose a valid date.");
-export const amountSchema = z
+const currencySchema = z
   .number({ error: "Enter a valid amount." })
   .finite()
   .min(0, "Enter zero or a positive amount.")
-  .max(100_000_000, "Use an amount of ₹10,00,00,000 or less.")
   .refine(
-    (value) => Math.abs(value * 100 - Math.round(value * 100)) < 0.00001,
+    (value) =>
+      Math.abs(value - Math.round(value * 100) / 100) <=
+      Number.EPSILON * Math.max(1, Math.abs(value)),
     "Use no more than two decimal places.",
   );
+export const amountSchema = currencySchema.max(
+  LIMITS.amount,
+  "Use an amount of ₹10,00,00,000 or less.",
+);
+// A ledger can contain the maximum amount for each allowed expense record.
+export const recordedSpendingSchema = currencySchema.max(
+  LIMITS.amount * LIMITS.expenses,
+  "Recorded spending exceeds the maximum supported ledger total.",
+);
 const idSchema = z.string().trim().min(1).max(100);
 export const eventInputSchema = z.object({
   name: z.string().trim().min(2, "Give your event a name.").max(100),

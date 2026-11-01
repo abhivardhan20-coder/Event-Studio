@@ -17,7 +17,9 @@ export function budgetSnapshot(input: ChatRequest) {
     input.messages.filter((message) => message.role === "user").at(-1)?.text ??
     "";
   if (!isBudgetQuestion(lastQuestion)) return "";
-  const available = input.event.budget - input.spending;
+  const available =
+    (Math.round(input.event.budget * 100) - Math.round(input.spending * 100)) /
+    100;
   const allocations = budgetAllocations({ ...input.event, expenses: [] });
   return `Your budget: ${money(input.event.budget)}\nRecorded expenses: ${money(input.spending)}\n${available < 0 ? "Over budget" : "Available"}: ${money(Math.abs(available))}\n\nSuggested allocation of your original total budget:\n${allocations.map((row) => `${row.category}: ${money(row.planned)}`).join("\n")}\nThese allocations include amounts already recorded, not additional spending.\n\n`;
 }
